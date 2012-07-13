@@ -1,0 +1,28 @@
+{% extends "pyramid_admin:templates/base.html" %}
+
+{% block content %}
+
+    
+
+    {% block functions %}
+    <ul>
+        <li><a href="{{ view.url(action="new") }}">Добавить</a></li>  
+    </ul>
+    {% endblock %}
+
+    {% block list %}
+        <table>
+            {% for obj in objects %}
+                <tr>
+                    <td>
+                        <a href="{{ view.url(action="edit", id=obj.id) }}"> {{ obj.id }}</a></td>
+                    <td>{{ obj }}</td>
+                    <td></td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% endblock %}
+
+    {% block pager %}
+    {% endblock %}
+{% endblock %}

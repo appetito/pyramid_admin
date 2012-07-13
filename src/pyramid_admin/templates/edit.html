@@ -1,0 +1,50 @@
+{% extends "pyramid_admin:templates/base.html" %}
+
+{% block extra_js %}
+    {{ super() }}
+    <script type="text/javascript">
+        $(document).ready(function(){
+            $('.b-delete-button').click(function(){
+                if(confirm("Вы действительно хотите удалить этот объект?")){
+                    $.post($(this).attr('data-url'), {}, function(){
+                        window.location.href="{{ view.url() }}";
+                    });
+                };
+                return false;
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block content %}
+
+
+
+    {% block functions %}
+    {% endblock %}
+
+    {% block form %}
+        <form action="" method="post">
+            <table>
+            {% for field in obj_form %}
+                <tr>
+                    <th>{{ field.label }}</th>
+                    <td>{{ field|errors }}{{ field }}</td>
+                </tr>
+            {% endfor %}
+            <tr>
+                <td>
+                    <input type="submit" value="Сохранить">
+                    <a href="{{ view.url() }}">Отмена</a>
+                    {% if obj %}
+                        <a class="b-delete-button" href="javascript:void(0)" data-url="{{ view.url(action="delete", id=obj.id) }}">Удалить</a>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+        </form>
+    {% endblock %}
+
+    {% block pager %}
+    {% endblock %}
+{% endblock %}
