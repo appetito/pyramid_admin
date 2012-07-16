@@ -24,24 +24,26 @@
     {% endblock %}
 
     {% block form %}
-        <form action="" method="post">
-            <table>
+        <form class="form-horizontal" action="" method="post">
+            <fieldset>
             {% for field in obj_form %}
-                <tr>
-                    <th>{{ field.label }}</th>
-                    <td>{{ field|errors }}{{ field }}</td>
-                </tr>
+                <div class="control-group">
+                    {{ field.label(class="control-label") }}
+                    <div class="controls">
+                        {{ field|errors }}{{ field }}
+                    </div>
+                </div>
             {% endfor %}
-            <tr>
-                <td>
-                    <input type="submit" value="Сохранить">
-                    <a href="{{ view.url() }}">Отмена</a>
-                    {% if obj %}
-                        <a class="b-delete-button" href="javascript:void(0)" data-url="{{ view.url(action="delete", id=obj.id) }}">Удалить</a>
-                    {% endif %}
-                </td>
-            </tr>
-        </table>
+                <div class="control-group">
+                    <div class="controls">
+                        <input class="btn btn-primary" type="submit" value="Сохранить">
+                        <a class="btn" href="{{ view.url() }}">Отмена</a>
+                        {% if obj %}
+                            <a class="b-delete-button btn btn-danger" href="javascript:void(0)" data-url="{{ view.url(action="delete", id=obj.id) }}">Удалить</a>
+                        {% endif %}
+                    </div>
+                </div>
+                </fieldset>
         </form>
     {% endblock %}
 

@@ -50,7 +50,6 @@ class AdminView(object):
                 renderer='pyramid_admin:templates/edit.html')
     def edit(self):
         """generic edit form admin view"""
-        import ipdb; ipdb.set_trace()
         obj = self.get_obj()
         if not obj:
             raise HTTPNotFound
