@@ -5,21 +5,32 @@
     
 
     {% block functions %}
-    <ul>
-        <li><a href="{{ view.url(action="new") }}">Добавить</a></li>  
-    </ul>
+    <p>
+        <div class="btn-group">
+            <a class="btn btn-primary" href="{{ view.url(action="new") }}">Добавить</a> 
+        </div>
+    </p>
     {% endblock %}
 
     {% block list %}
-        <table>
-            {% for obj in objects %}
+        <table class="table table-bordered">
+            <thead>
                 <tr>
-                    <td>
-                        <a href="{{ view.url(action="edit", id=obj.id) }}"> {{ obj.id }}</a></td>
-                    <td>{{ obj }}</td>
-                    <td></td>
+                    {% for f in view.field_list %}
+                        <th>{{ f }}</th>
+                    {% endfor %}
                 </tr>
-            {% endfor %}
+            </thead>
+            <tbody>
+                {% for obj in objects %}
+                    <tr>
+
+                        {% for f in view.fields(obj) %}
+                            <td>{{ f[1] }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
         </table>
     {% endblock %}
 

@@ -39,7 +39,7 @@
                         <input class="btn btn-primary" type="submit" value="Сохранить">
                         <a class="btn" href="{{ view.url() }}">Отмена</a>
                         {% if obj %}
-                            <a class="b-delete-button btn btn-danger" href="javascript:void(0)" data-url="{{ view.url(action="delete", id=obj.id) }}">Удалить</a>
+                            <a class="b-delete-button btn btn-danger" href="javascript:void(0)" data-url="{{ view.url(action="delete", obj_id=obj.id) }}">Удалить</a>
                         {% endif %}
                     </div>
                 </div>

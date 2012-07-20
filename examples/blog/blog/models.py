@@ -44,6 +44,8 @@ class User(Base):
     name = Column(Unicode(50))
     email = Column(Unicode(50))
 
+    
+
 
 class MyModel(object):
     pass

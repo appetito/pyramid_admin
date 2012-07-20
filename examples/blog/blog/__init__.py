@@ -19,6 +19,8 @@ class UserAdminView(AdminView):
     model = User
     form_class = UserForm
     sess = DBSession
+    field_list = ['id', 'username', 'name', 'email']
+
 
 def main(global_config, **settings):
     """ This function returns a WSGI application.
@@ -45,6 +47,7 @@ def main(global_config, **settings):
                     context='blog.models.MyModel', 
                     renderer="mytemplate.jinja2")
 
-    config.add_admin_view('user_admin', '/admin/users/', UserAdminView)
-
+    # config.add_admin_view('user_admin', '/admin/users/', UserAdminView)
+    config.add_admin_site('/odmin/')
+    config.add_admin_view('users', UserAdminView)
     return config.make_wsgi_app()
