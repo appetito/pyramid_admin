@@ -45,6 +45,15 @@ class User(Base):
     email = Column(Unicode(50))
 
     
+class Post(Base):
+    """
+    Application's user model.
+    """
+    __tablename__ = 'posts'
+    id = Column(Integer, primary_key=True)
+    user = Column(Unicode(20), unique=True)
+    title = Column(Unicode(50))
+    content = Column(UnicodeText())
 
 
 class MyModel(object):

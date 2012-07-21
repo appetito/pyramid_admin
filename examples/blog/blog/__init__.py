@@ -5,7 +5,7 @@ from blog.models import get_root
 from sqlalchemy import create_engine
 from wtforms import *
 
-from blog.models import DBSession, metadata, User
+from blog.models import DBSession, metadata, User, Post
 
 from pyramid_admin.views import AdminView
 
@@ -20,6 +20,21 @@ class UserAdminView(AdminView):
     form_class = UserForm
     sess = DBSession
     field_list = ['id', 'username', 'name', 'email']
+    __title__ = u"Users ok"
+
+
+class PostForm(Form):
+    user = TextField()
+    title = TextField()
+    content = TextAreaField()
+
+
+class PostAdminView(AdminView):
+    model = Post
+    form_class = PostForm
+    sess = DBSession
+    field_list = ['id', 'user', 'title']
+    __title__ = u"All Posts"
 
 
 def main(global_config, **settings):
@@ -39,7 +54,7 @@ def main(global_config, **settings):
     config = Configurator(root_factory=get_root, settings=settings)
     config.add_translation_dirs('locale/')
     config.include('pyramid_jinja2')
-    config.add_renderer('.html', 'pyramid_jinja2.renderer_factory')
+
     config.include('pyramid_admin')
 
     config.add_static_view('static', 'static')
@@ -48,6 +63,7 @@ def main(global_config, **settings):
                     renderer="mytemplate.jinja2")
 
     # config.add_admin_view('user_admin', '/admin/users/', UserAdminView)
-    config.add_admin_site('/odmin/')
+    config.add_admin_site('/admin/')
     config.add_admin_view('users', UserAdminView)
+    config.add_admin_view('posts', PostAdminView)
     return config.make_wsgi_app()
