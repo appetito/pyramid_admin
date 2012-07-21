@@ -40,8 +40,11 @@ class AdminSite(object):
         else:
             return self.index()
 
+    # def post_process(self, data):
+
+
     def index(self):
-        return render_to_response("pyramid_admin:templates/index.jinja2", {'request': self.request})
+        return render_to_response("pyramid_admin:templates/index.jinja2", {'request': self.request, 'site': self})
 
     def get_views(self):
         return self.request.registry.getUtilitiesFor(IAdminView)
@@ -62,4 +65,7 @@ class AdminSite(object):
         if q:
             fn = partial(fn, _query=q)
         return fn()
+
+
+        
 

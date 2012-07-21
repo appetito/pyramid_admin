@@ -17,7 +17,7 @@
             <thead>
                 <tr>
                     {% for f in view.field_list %}
-                        <th>{{ f }}</th>
+                        <th>{{ view.table_title(f) }}</th>
                     {% endfor %}
                 </tr>
             </thead>

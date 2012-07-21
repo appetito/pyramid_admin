@@ -5,7 +5,7 @@ from functools import partial
 from pyramid.httpexceptions import HTTPFound, HTTPNotFound
 from jinja2 import Markup
 
-from pyramid_admin import action, obj_action
+from pyramid_admin import action
 
 class AdminView(object):
     """Basic admin class-based view"""
@@ -19,6 +19,7 @@ class AdminView(object):
         self.request = request
         # import ipdb; ipdb.set_trace() # XXX BEARKPOINT
         self.parts = request.matchdict
+        self.list_order = {'field': self.request.GET.get('order'), 'desc': self.request.GET.get('desc')}
 
     def get_obj(self):
         obj = self.sess.query(self.model).filter(self.model.id==self.parts['obj_id']).first()
@@ -28,7 +29,15 @@ class AdminView(object):
         return obj
 
     def get_obj_list(self):
-        return self.sess.query(self.model).all()
+        q = self.sess.query(self.model)
+        order = self.list_order['field']
+        desc = self.list_order['desc']
+        if desc and order:
+            order = order + ' desc'
+        if order:
+            q = q.order_by(order)
+        return q.all()
+
 
     def get_form(self, obj=None, formdata=None):
         if self.form_class:
@@ -98,3 +107,13 @@ class AdminView(object):
             
     def _wrap_link_field(self, obj, value):
         return Markup('<a href="%s">%s</a>' % (self.url(action="edit", obj_id=obj.id), value))
+
+    def table_title(self, field_name):
+        url = self.url(order=field_name)
+        order_ico = ''
+        if field_name == self.list_order['field'] and not self.list_order['desc']:
+            order_ico = '<i class="icon-chevron-down"/>'
+            url = self.url(order=field_name, desc=1)
+        elif field_name == self.list_order['field'] and self.list_order['desc']:
+            order_ico = '<i class="icon-chevron-up"/>'
+        return Markup('<a href="%s">%s</a> %s' % (url, field_name, order_ico))
