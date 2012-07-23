@@ -39,17 +39,17 @@
             {% if page.page <= 1 %}
             <li class="disabled"><a>&lt;&lt;</a></li>
             {% else %}
-            <li><a href="{{ view.url(pg=page.page - 1) }}">&lt;&lt;</a></li>
+            <li><a href="{{ view.page_url(page.page - 1) }}">&lt;&lt;</a></li>
             {% endif %}
             {% for n in range(1, page.page_count + 1) %}
                 <li {% if page.page == n %} class="active" {% endif %}>
-                    <a href="{{ view.url(pg=n) }}">{{ n }}</a>
+                    <a href="{{ view.page_url(n) }}">{{ n }}</a>
                 </li>
             {% endfor %}
             {% if page.page > page.page_count - 1 %}
                 <li class="disabled"> <a>&gt;&gt;</a></li>
             {% else %}
-                <li><a href="{{ view.url(pg=page.page + 1) }}">&gt;&gt;</a></li>
+                <li><a href="{{ view.page_url(page.page + 1) }}">&gt;&gt;</a></li>
             {% endif %}
           </ul>
         </div>

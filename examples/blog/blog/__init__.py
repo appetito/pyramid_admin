@@ -9,6 +9,11 @@ from blog.models import DBSession, metadata, User, Post
 
 from pyramid_admin.views import AdminView
 
+def session_factory():
+    return DBSession
+
+def allow_all(request):
+    return True
 
 class UserForm(Form):
     username = TextField()
@@ -18,7 +23,6 @@ class UserForm(Form):
 class UserAdminView(AdminView):
     model = User
     form_class = UserForm
-    sess = DBSession
     field_list = ['id', 'username', 'name', 'email']
     __title__ = u"Users ok"
 
@@ -32,7 +36,6 @@ class PostForm(Form):
 class PostAdminView(AdminView):
     model = Post
     form_class = PostForm
-    sess = DBSession
     field_list = ['id', 'user', 'title']
     __title__ = u"All Posts"
 
@@ -54,6 +57,7 @@ def main(global_config, **settings):
     config = Configurator(root_factory=get_root, settings=settings)
     config.add_translation_dirs('locale/')
     config.include('pyramid_jinja2')
+    # config.include('pyramid_tm')
 
     config.include('pyramid_admin')
 
@@ -64,6 +68,8 @@ def main(global_config, **settings):
 
     # config.add_admin_view('user_admin', '/admin/users/', UserAdminView)
     config.add_admin_site('/admin/')
+    config.set_sqla_session_factory(session_factory)
+    config.set_admin_authz_policy(allow_all)
     config.add_admin_view('users', UserAdminView)
     config.add_admin_view('posts', PostAdminView)
     return config.make_wsgi_app()

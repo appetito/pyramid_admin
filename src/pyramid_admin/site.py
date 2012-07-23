@@ -3,13 +3,17 @@ from functools import partial
 
 from zope.interface import Interface
 
-from pyramid.httpexceptions import HTTPNotFound
+from pyramid.httpexceptions import HTTPNotFound, HTTPForbidden
 from pyramid.renderers import render_to_response
 
 class IAdminView(Interface):
     """ model admin interface"""
 
+class ISqlaSessionFactory(Interface):
+    """ SQLA Session factoru interface"""
 
+class IAdminAuthzPolicy(Interface):
+    """ Admin authorization function"""
 
 class AdminSite(object):
 
@@ -17,8 +21,12 @@ class AdminSite(object):
         self.context = context
         self.request = request
         self.parts = request.matchdict
+        # import ipdb; ipdb.set_trace()
+        self.session = self.request.registry.queryUtility(ISqlaSessionFactory)()
 
     def __call__(self):
+        if not self.authorize():
+            raise HTTPForbidden
         model_name = self.parts.get('model_name')
         action = self.parts.get('action', 'list')
         if model_name:
@@ -32,16 +40,21 @@ class AdminSite(object):
                 result = act()
                 result.update({'request': self.request, 'view': admin_view, 'site': self})
                 renderer = act.__action_params__[0]['renderer']
-                # import ipdb; ipdb.set_trace()
+                self.session.commit()
                 return render_to_response(renderer, result)
             else:
                 raise HTTPNotFound
-
         else:
             return self.index()
 
-    # def post_process(self, data):
-
+    def authorize(self):
+        """
+        authorize admin site usage
+        """
+        authz_policy = self.request.registry.queryUtility(IAdminAuthzPolicy)
+        if authz_policy:
+            return authz_policy(self.request)
+        return False        
 
     def index(self):
         return render_to_response("pyramid_admin:templates/index.jinja2", {'request': self.request, 'site': self})

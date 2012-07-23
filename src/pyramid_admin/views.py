@@ -23,14 +23,14 @@ class AdminView(object):
         self.list_order = {'field': self.request.GET.get('order'), 'desc': self.request.GET.get('desc')}
 
     def get_obj(self):
-        obj = self.sess.query(self.model).filter(self.model.id==self.parts['obj_id']).first()
+        obj = self.site.session.query(self.model).filter(self.model.id==self.parts['obj_id']).first()
         # import ipdb; ipdb.set_trace() # XXX BEARKPOINT
         if not obj:
             raise HTTPNotFound
         return obj
 
     def get_list_query(self):
-        q = self.sess.query(self.model)
+        q = self.site.session.query(self.model)
         order = self.list_order['field']
         desc = self.list_order['desc']
         if desc and order:
@@ -55,6 +55,10 @@ class AdminView(object):
         """
         return self.site.url(name=self.__view_name__, action=action, obj_id=obj_id, **q)
 
+    def page_url(self, page_num):
+            url = self.request.path_qs
+            return util.update_params(url, pg=page_num)
+
     @action(renderer='pyramid_admin:templates/list.jinja2', index=True)
     def list(self):
         """generic list admin view"""
@@ -63,6 +67,7 @@ class AdminView(object):
         page_num = self.request.GET.get('pg', 1)
         page = paginate.Page(query, page=page_num, items_per_page=4)
         objects = query.all()
+
         return {'objects': objects, 'page':page, 'view':self}
 
     @action(renderer='pyramid_admin:templates/edit.jinja2')
@@ -73,7 +78,7 @@ class AdminView(object):
             form = self.get_form(formdata=self.request.POST, obj=obj)
             if form.validate():
                 form.populate_obj(obj)
-                self.sess.add(obj)
+                self.site.session.add(obj)
                 raise HTTPFound(self.url())
         else:
             form = self.get_form(obj)
@@ -87,14 +92,14 @@ class AdminView(object):
             if form.validate():
                 obj = self.model()
                 form.populate_obj(obj)
-                self.sess.add(obj)
+                self.site.session.add(obj)
                 raise HTTPFound(self.url())
         return {'obj':None, 'obj_form': form, 'view':self}
 
     @action(request_method="POST")
     def delete(self):
         obj = self.get_obj()
-        self.sess.delete(obj)
+        self.site.session.delete(obj)
         raise HTTPFound(self.url())
 
     def _build_form(self):
@@ -117,11 +122,13 @@ class AdminView(object):
         return Markup('<a href="%s">%s</a>' % (self.url(action="edit", obj_id=obj.id), value))
 
     def table_title(self, field_name):
-        url = self.url(order=field_name)
+        url = self.request.path_qs
+        url = util.update_params(url, order=field_name, desc=None)
         order_ico = ''
         if field_name == self.list_order['field'] and not self.list_order['desc']:
             order_ico = '<i class="icon-chevron-down"/>'
-            url = self.url(order=field_name, desc=1)
+            url = util.update_params(url, order=field_name, desc=1)
         elif field_name == self.list_order['field'] and self.list_order['desc']:
             order_ico = '<i class="icon-chevron-up"/>'
+            url = util.update_params(url, order=None, desc=None)
         return Markup('<a href="%s">%s</a> %s' % (url, field_name, order_ico))
