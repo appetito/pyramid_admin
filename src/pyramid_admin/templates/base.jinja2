@@ -72,6 +72,10 @@
                 <li {% if view.__class__ == view_class %} class="active" {% endif %}><a href="{{ site.url(name=name) }}">{{ view_class.__title__ }}</a></li>
               {% endfor %}
             </ul>
+            {% block sidebar_extra %}
+
+            {% endblock %}
+            <div></div>
           </div><!--/.well -->
         </div><!--/span-->
         <div class="span9 b-content">

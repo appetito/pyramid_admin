@@ -5,14 +5,63 @@ from functools import partial
 from pyramid.httpexceptions import HTTPFound, HTTPNotFound
 from jinja2 import Markup
 from webhelpers import util, paginate
+from webhelpers.html import HTML
 
 from pyramid_admin import action
+
+
+class QueryFilter(object):
+
+    title="Filter"
+
+    def __init__(self, field_name):
+        self.field_name = field_name
+        self.id = field_name #XXX 
+
+    def apply(self, request, query, model):
+        return query
+
+    def update_url(self, url):
+        return url
+
+    def display(self, request):
+        return Markup('<h3>%s</h3>' % self.title)
+
+
+class LikeFilter(QueryFilter):
+
+    def __init__(self, field_name, pattern="%%%s%%"):
+        self.field_name = field_name
+        self.pattern = pattern
+        self.id = field_name #XXX 
+        self.term = ""
+
+
+    def apply(self, request, query, model):
+        field = getattr(model, self.field_name)
+        term = request.GET.get(self.id)
+        # import ipdb; ipdb.set_trace()
+        if term:
+            return query.filter(field.ilike(self.pattern % term))
+        return query
+
+    def activate(self, request):
+        term = request.GET.get(self.id)
+        if term:
+            self.is_active=True
+            self.term = term
+
+    def display(self):
+        inp = HTML.tag('input', type="text", name=self.id, value=self.term)
+        return Markup('<h3>%s</h3> %s' % (self.title, inp))
+
 
 class AdminView(object):
     """Basic admin class-based view"""
 
     field_list = ['id', unicode]
     list_links = ['id']
+    filters = []
 
     def __init__(self, site, context, request):
         self.site = site
@@ -21,6 +70,9 @@ class AdminView(object):
         # import ipdb; ipdb.set_trace() # XXX BEARKPOINT
         self.parts = request.matchdict
         self.list_order = {'field': self.request.GET.get('order'), 'desc': self.request.GET.get('desc')}
+        for i, f in enumerate(self.filters):
+            f.id = 'f%s' % i
+            f.activate(self.request)
 
     def get_obj(self):
         obj = self.site.session.query(self.model).filter(self.model.id==self.parts['obj_id']).first()
@@ -40,8 +92,9 @@ class AdminView(object):
         return q
 
     def apply_filters(self, query):
+        for f in self.filters:
+            query = f.apply(self.request, query, self.model)
         return query
-
 
     def get_form(self, obj=None, formdata=None):
         if self.form_class:

@@ -33,7 +33,14 @@
                 {% endfor %}
             </tbody>
         </table>
-        {% if page.page_count > 1 %}
+       
+    {% endblock %}
+
+            
+
+    {% block pager %}
+
+         {% if page.page_count > 1 %}
         <div class="pagination">
           <ul>
             {% if page.page <= 1 %}
@@ -54,8 +61,18 @@
           </ul>
         </div>
         {% endif %}
+        
     {% endblock %}
+{% endblock %}
 
-    {% block pager %}
-    {% endblock %}
+{% block sidebar_extra %}
+    <div>
+        <form action="">
+            {% for f in view.filters %}
+                <p>{{ f.display() }}</p>
+            {% endfor %}
+            <input type="submit"/>
+        </form>
+    </div>
+
 {% endblock %}
