@@ -4,6 +4,7 @@ from functools import partial
 
 from pyramid.httpexceptions import HTTPFound, HTTPNotFound
 from jinja2 import Markup
+from webhelpers import util, paginate
 
 from pyramid_admin import action
 
@@ -28,7 +29,7 @@ class AdminView(object):
             raise HTTPNotFound
         return obj
 
-    def get_obj_list(self):
+    def get_list_query(self):
         q = self.sess.query(self.model)
         order = self.list_order['field']
         desc = self.list_order['desc']
@@ -36,7 +37,10 @@ class AdminView(object):
             order = order + ' desc'
         if order:
             q = q.order_by(order)
-        return q.all()
+        return q
+
+    def apply_filters(self, query):
+        return query
 
 
     def get_form(self, obj=None, formdata=None):
@@ -54,8 +58,12 @@ class AdminView(object):
     @action(renderer='pyramid_admin:templates/list.jinja2', index=True)
     def list(self):
         """generic list admin view"""
-        objects = self.get_obj_list()
-        return {'objects': objects, 'view':self}
+        query = self.get_list_query()
+        query = self.apply_filters(query)
+        page_num = self.request.GET.get('pg', 1)
+        page = paginate.Page(query, page=page_num, items_per_page=4)
+        objects = query.all()
+        return {'objects': objects, 'page':page, 'view':self}
 
     @action(renderer='pyramid_admin:templates/edit.jinja2')
     def edit(self):

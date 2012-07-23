@@ -6,7 +6,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.md')).read()
 CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 
-requires=['pyramid>=1.0.2', 'pyramid_jinja2', 'wtforms']
+requires=['pyramid>=1.0.2', 'pyramid_jinja2', 'wtforms', 'webhelpers']
 
 setup(name='pyramid_admin',
       version='0.0',

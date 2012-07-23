@@ -44,7 +44,7 @@ def main(global_config, **settings):
     ``paster serve``.
     """
 
-    engine =  create_engine('sqlite://')
+    engine =  create_engine('sqlite:///blog.db')
     DBSession.configure(bind=engine)
     metadata.create_all(engine)
 
