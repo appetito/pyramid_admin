@@ -65,14 +65,27 @@
     {% endblock %}
 {% endblock %}
 
+<!-- [ FILTERS ] -->
 {% block sidebar_extra %}
     <div>
         <form action="">
-            {% for f in view.filters %}
-                <p>{{ f.display() }}</p>
-            {% endfor %}
-            <input type="submit"/>
+            <ul class="nav nav-list">
+              <li class="nav-header">Filters</li>
+                {% for f in view.filters %}
+                    <li><h4>{{ f.title }}</h4></li>
+                    <li>{{ f.display() }}</li>
+                {% endfor %}
+            <input type="submit" class="btn" value="Apply"/>
+            <a href="{{ view.url() }}" class="btn">Reset</a>
         </form>
     </div>
+{% endblock %}
+<!-- [ /FILTERS ] -->
 
+{% block jq_ready %}
+    $("#filter_reset").click(function(){
+        var form = $(this).closest('form');
+        $('.filter_input', form).val('');
+        console.log(form.find('input[type=text]'));
+    });
 {% endblock %}
