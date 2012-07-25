@@ -7,7 +7,20 @@ from jinja2 import Markup
 from webhelpers import util, paginate
 from webhelpers.html import HTML
 
-from pyramid_admin import action
+from pyramid_admin.interfaces import IColumnRenderer
+
+
+def action(name=None, **kw):
+    """action decorator"""
+    def _wrapper(fn):
+        kw['name'] = name or fn.__name__
+        kw['fn_name'] = fn.__name__
+        if hasattr(fn, '__action_params__'):
+            fn.__action_params__.append(kw)
+        else:
+            fn.__action_params__ = [kw]
+        return fn
+    return _wrapper
 
 
 class QueryFilter(object):
@@ -160,19 +173,9 @@ class AdminView(object):
         raise NotImplementedError
 
     def fields(self, obj):
-        for f in self.field_list:
-            if isinstance(f, basestring):
-                val = getattr(obj, f)
-                label = f
-            elif callable(f):
-                val = f(obj)
-                label = getattr(f, '__label__', f.__name__)
-            if f in self.list_links:
-                val = self._wrap_link_field(obj, val)
-            yield (f, val)
+        return TableRow(obj, self, self.field_list, self.list_links)
             
-    def _wrap_link_field(self, obj, value):
-        return Markup('<a href="%s">%s</a>' % (self.url(action="edit", obj_id=obj.id), value))
+
 
     def table_title(self, field_name):
         url = self.request.path_qs
@@ -185,3 +188,66 @@ class AdminView(object):
             order_ico = '<i class="icon-chevron-up"/>'
             url = util.update_params(url, order=None, desc=None)
         return Markup('<a href="%s">%s</a> %s' % (url, field_name, order_ico))
+
+
+class TableRow(object):
+
+    def __init__(self, obj, view, field_list, list_links):
+        self.obj = obj
+        self.view = view
+        self.field_list = field_list
+        self.list_links = list_links
+
+    def __iter__(self):
+        # import ipdb; ipdb.set_trace()
+        for f in self.field_list:
+            if isinstance(f, basestring):
+                renderer = self.view.request.registry.queryAdapter(get_type(self.obj, f), IColumnRenderer)
+                val = renderer(getattr(self.obj, f))
+                label = f
+            elif callable(f):
+                val = f(self.obj)
+                label = getattr(f, '__label__', f.__name__)
+            if f in self.list_links:
+                val = self._wrap_link_field(self.obj, val)
+            yield (f, val)
+
+    def _wrap_link_field(self, obj, value):
+        return Markup('<a href="%s">%s</a>' % (self.view.url(action="edit", obj_id=obj.id), value))
+
+
+def get_type(obj, fieldname):
+    return obj.__table__.columns[fieldname].type
+
+
+class StringRenderer(object):
+
+    def __init__(self, type):
+        self.type = type
+
+    def __call__(self, val, editable=False):
+        return val
+
+
+class BoolRenderer(object):
+
+    def __init__(self, type):
+        self.type = type
+
+    def __call__(self, val, editable=False):
+        return Markup('<i class="%s"></i>' % ('icon-ok' if val else 'icon-remove'))
+
+
+def register_adapters(reg):
+    from sqlalchemy.types import Integer
+    from sqlalchemy.types import String
+    from sqlalchemy.types import Date
+    from sqlalchemy.types import DateTime
+    from sqlalchemy.types import Boolean
+
+    reg.registerAdapter(StringRenderer, (Integer,), IColumnRenderer)
+    reg.registerAdapter(StringRenderer, (String,), IColumnRenderer)
+    reg.registerAdapter(BoolRenderer, (Boolean,), IColumnRenderer)
+    # reg.registerAdapter(WTFieldXmlSerializer, (Field,), IXmlSerializer)
+    # reg.registerAdapter(WTTextareaXmlSerializer, (TextAreaField,), IXmlSerializer)
+    

@@ -3,29 +3,13 @@ from jinja2 import Markup
 from zope.interface import Interface
 
 from pyramid_admin.site import AdminSite, IAdminView, ISqlaSessionFactory, IAdminAuthzPolicy
+from pyramid_admin.views import register_adapters
 
-
-
-def action(name=None, **kw):
-    """action decorator"""
-    def _wrapper(fn):
-        kw['name'] = name or fn.__name__
-        kw['fn_name'] = fn.__name__
-        if hasattr(fn, '__action_params__'):
-            fn.__action_params__.append(kw)
-        else:
-            fn.__action_params__ = [kw]
-        return fn
-    return _wrapper
 
 
 def wtf_errors(field):
-    ret = ''
-    html = u'<ul class="b-field_errors">%s</ul>'
-    li = u''.join([u"<li>%s</li>" % e for e in field.errors])
-    if li:
-        ret = Markup(html % li)
-    return ret
+    html = u''.join([u'<span class="help-inline">%s</li>' % e for e in field.errors])
+    return Markup(html)
 
 
 def add_admin_site(config, prefix, view=AdminSite, session_factory=None, authz_policy=None):
@@ -58,4 +42,5 @@ def includeme(config):
     config.add_directive('add_admin_site', add_admin_site)
     config.add_static_view(name='_admin_assets', path="pyramid_admin:assets")
     env = config.get_jinja2_environment()
+    register_adapters(config.registry)
     env.filters.update({'errors': wtf_errors})

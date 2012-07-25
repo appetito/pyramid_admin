@@ -6,14 +6,10 @@ from zope.interface import Interface
 from pyramid.httpexceptions import HTTPNotFound, HTTPForbidden
 from pyramid.renderers import render_to_response
 
-class IAdminView(Interface):
-    """ model admin interface"""
+from pyramid_admin.interfaces import IAdminView
+from pyramid_admin.interfaces import ISqlaSessionFactory
+from pyramid_admin.interfaces import IAdminAuthzPolicy
 
-class ISqlaSessionFactory(Interface):
-    """ SQLA Session factoru interface"""
-
-class IAdminAuthzPolicy(Interface):
-    """ Admin authorization function"""
 
 class AdminSite(object):
 

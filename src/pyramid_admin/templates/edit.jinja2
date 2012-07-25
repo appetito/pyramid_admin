@@ -27,10 +27,10 @@
         <form class="form-horizontal" action="" method="post">
             <fieldset>
             {% for field in obj_form %}
-                <div class="control-group">
+                <div class="control-group {% if field.errors %}error{% endif %}">
                     {{ field.label(class="control-label") }}
                     <div class="controls">
-                        {{ field|errors }}{{ field }}
+                        {{ field }}{{ field|errors }}
                     </div>
                 </div>
             {% endfor %}
