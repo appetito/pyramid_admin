@@ -7,7 +7,7 @@ from wtforms import *
 
 from blog.models import DBSession, metadata, User, Post
 
-from pyramid_admin.views import AdminView, LikeFilter
+from pyramid_admin.views import AdminView, LikeFilter, BoolFilter
 
 def session_factory():
     return DBSession
@@ -25,7 +25,7 @@ class UserAdminView(AdminView):
     model = User
     form_class = UserForm
     field_list = ['id', 'username', 'name', 'email', 'is_active']
-    filters = [LikeFilter('username'), LikeFilter('name')]
+    filters = [LikeFilter('username'), LikeFilter('name'), BoolFilter('is_active')]
     __title__ = u"Users ok"
 
 

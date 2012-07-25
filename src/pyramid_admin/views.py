@@ -68,6 +68,41 @@ class LikeFilter(QueryFilter):
         return Markup(inp)
 
 
+class BoolFilter(QueryFilter):
+
+    def __init__(self, field_name, true="True", false="False", title=None):
+        self.field_name = field_name
+        self.id = field_name #XXX 
+        self.true = true
+        self.false = false
+        self.title = title or "%s is:" % field_name.title()
+
+    def apply(self, request, query, model):
+        if self.is_active:
+            field = getattr(model, self.field_name)
+            return query.filter(field == self.val)
+        return query
+
+    def activate(self, request):
+        val = request.GET.get(self.id)
+        if val:
+            self.is_active=True
+        else:
+            self.is_active = False
+        self.val = val == 't'
+
+    def display(self):
+        if self.val:
+            inp1 = HTML.tag('input', type="radio", name=self.id, value="f")
+            inp2 = HTML.tag('input', type="radio", name=self.id, value="t", checked="checked")
+        else:
+            inp1 = HTML.tag('input', type="radio", name=self.id, value="f", checked="checked")
+            inp2 = HTML.tag('input', type="radio", name=self.id, value="t")
+        if not self.is_active:
+            inp1 = HTML.tag('input', type="radio", name=self.id, value="f")
+            inp2 = HTML.tag('input', type="radio", name=self.id, value="t")
+        return Markup('<label class="radio">%s%s</label><label class="radio">%s%s</label>' % (inp1, self.false, inp2, self.true))
+
 class AdminView(object):
     """Basic admin class-based view"""
 
