@@ -25,16 +25,6 @@ Base = declarative_base()
 metadata = Base.metadata
 
 
-class QueryProperty(object):
-    """Query property with Query class hook"""
-    def __get__(self, obj, cls):
-        query = (Session.query_property(query_cls=cls.__query_cls__)
-                       .__get__(obj, cls))
-
-        query.model_class = cls
-
-        return query
-
 class User(Base):
     """
     Application's user model.
