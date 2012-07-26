@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>Pyramid Admin Site</title>
+    <title>{{ site.title }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
@@ -39,7 +39,8 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </a>
-          <a class="brand" href="{{ site.url() }}">Project name</a>
+          <a class="brand" href="{{ site.url() }}">{{ site.title }}</a>
+          <!--
           <div class="btn-group pull-right">
             <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
               <i class="icon-user"></i> Username
@@ -57,7 +58,8 @@
               <li><a href="#about">About</a></li>
               <li><a href="#contact">Contact</a></li>
             </ul>
-          </div><!--/.nav-collapse -->
+          </div>
+          -->
         </div>
       </div>
     </div>
@@ -67,7 +69,7 @@
         <div class="span3">
           <div class="well sidebar-nav">
             <ul class="nav nav-list">
-              <li class="nav-header">Sidebar</li>
+              <li class="nav-header">Models</li>
               {% for name, view_class in site.get_views() %}
                 <li {% if view.__class__ == view_class %} class="active"{% endif %}>
                   <a href="{{ site.url(name=name) }}">{{ view_class.__title__ }}</a>
@@ -89,7 +91,7 @@
       <hr>
 
       <footer>
-        <p>&copy; Company 2012</p>
+        <p>&copy;</p>
       </footer>
 
     </div><!--/.fluid-container-->

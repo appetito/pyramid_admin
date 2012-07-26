@@ -3,6 +3,7 @@
 from functools import partial
 
 from pyramid.httpexceptions import HTTPFound, HTTPNotFound
+from pyramid.renderers import render_to_response
 from jinja2 import Markup
 from webhelpers import util, paginate
 from webhelpers.html import HTML
@@ -60,7 +61,11 @@ class AdminView(object):
         action = self.__actions__.get(action_name, None)
         if action is None or not callable(action):
             raise HTTPNotFound
-        return action(self)
+        result =  action(self)
+        result.update({'request': self.request, 'view': self, 'site': self.site})
+        renderer = action.__action_params__['renderer']
+        return render_to_response(renderer, result)
+
 
     def get_obj(self):
         obj = self.site.session.query(self.model).filter(self.model.id==self.parts['obj_id']).first()

@@ -12,15 +12,17 @@ def wtf_errors(field):
     return Markup(html)
 
 
-def add_admin_site(config, prefix, view=AdminSite, session_factory=None, authz_policy=None):
+def add_admin_site(config, prefix, view=AdminSite, title="Admin Site", session_factory=None, authz_policy=None):
     config.add_route('admin_root', prefix)
     config.add_route('admin_model', prefix+'{model_name}/')
     config.add_route('admin_model_action', prefix+'{model_name}/{action}/')
     config.add_route('admin_model_obj_action', prefix+'{model_name}/{obj_id}/{action}/')
-    config.add_view(config.maybe_dotted(view), route_name='admin_root')
-    config.add_view(config.maybe_dotted(view), route_name='admin_model')
-    config.add_view(config.maybe_dotted(view), route_name='admin_model_action')
-    config.add_view(config.maybe_dotted(view), route_name='admin_model_obj_action')
+    view = config.maybe_dotted(view)
+    view.title = title
+    config.add_view(view, route_name='admin_root')
+    config.add_view(view, route_name='admin_model')
+    config.add_view(view, route_name='admin_model_action')
+    config.add_view(view, route_name='admin_model_obj_action')
 
 def add_admin_view(config, name, admin_view):
     admin_view = config.maybe_dotted(admin_view)

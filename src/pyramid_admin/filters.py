@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+from webhelpers.html import HTML
+from jinja2 import Markup
+
 class QueryFilter(object):
 
     title="Filter"

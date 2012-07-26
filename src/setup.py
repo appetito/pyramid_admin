@@ -6,10 +6,10 @@ here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.md')).read()
 CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 
-requires=['pyramid>=1.0.2', 'pyramid_jinja2', 'wtforms', 'webhelpers']
+requires=['pyramid>=1.3', 'pyramid_jinja2', 'wtforms', 'webhelpers']
 
 setup(name='pyramid_admin',
-      version='0.0',
+      version='0.1',
       description='pyramid_admin',
       long_description=README + '\n\n' +  CHANGES,
       classifiers=[
@@ -21,7 +21,7 @@ setup(name='pyramid_admin',
       author='',
       author_email='',
       url='',
-      keywords='web pyramid pylons',
+      keywords='web pyramid sqlalchemy admin crud',
       packages=find_packages(),
       include_package_data=True,
       zip_safe=False,
