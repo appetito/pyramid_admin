@@ -39,6 +39,7 @@ class AdminView(object):
     field_list = ['id', unicode]
     list_links = ['id']
     filters = []
+    items_per_page = 20
 
     def __init__(self, site, context, request):
         self.site = site
@@ -108,7 +109,7 @@ class AdminView(object):
         query = self.get_list_query()
         query = self.apply_filters(query)
         page_num = self.request.GET.get('pg', 1)
-        page = paginate.Page(query, page=page_num, items_per_page=4)
+        page = paginate.Page(query, page=page_num, items_per_page=self.items_per_page)
         objects = query.all()
 
         return {'objects': objects, 'page':page, 'view':self}
