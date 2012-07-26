@@ -27,7 +27,7 @@ class UserAdminView(AdminView):
     form_class = UserForm
     field_list = ['id', 'username', 'name', 'email', 'is_active']
     filters = [LikeFilter('username'), LikeFilter('name'), BoolFilter('is_active')]
-    __title__ = u"Users ok"
+    title = u"Users ok"
 
 
 class PostForm(Form):
@@ -40,7 +40,7 @@ class PostAdminView(AdminView):
     model = Post
     form_class = PostForm
     field_list = ['id', 'user', 'title']
-    __title__ = u"All Posts"
+    title = u"All Posts"
 
 
 def main(global_config, **settings):

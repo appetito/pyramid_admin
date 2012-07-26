@@ -29,7 +29,6 @@ class AdminViewMeta(type):
             val = getattr(ncl, name, None)
             if callable(val) and hasattr(val, '__action_params__'):
                 ncl.__actions__[val.__action_params__["name"]] = val
-        # import ipdb; ipdb.set_trace()
         return ncl
 
 class AdminView(object):
@@ -41,15 +40,10 @@ class AdminView(object):
     list_links = ['id']
     filters = []
 
-    # def __new__(cls, *arg, **kw):
-    #     import ipdb; ipdb.set_trace()
-    #     super(AdminView, cls).__new__()
-
     def __init__(self, site, context, request):
         self.site = site
         self.context = context
         self.request = request
-        # import ipdb; ipdb.set_trace() # XXX BEARKPOINT
         self.parts = request.matchdict
         self.list_order = {'field': self.request.GET.get('order'), 'desc': self.request.GET.get('desc')}
         for i, f in enumerate(self.filters):
@@ -66,10 +60,13 @@ class AdminView(object):
         renderer = action.__action_params__['renderer']
         return render_to_response(renderer, result)
 
+    @property
+    def title(self):
+        return self.model.__name__ + " view" 
+
 
     def get_obj(self):
         obj = self.site.session.query(self.model).filter(self.model.id==self.parts['obj_id']).first()
-        # import ipdb; ipdb.set_trace() # XXX BEARKPOINT
         if not obj:
             raise HTTPNotFound
         return obj
@@ -177,7 +174,6 @@ class TableRow(object):
         self.list_links = list_links
 
     def __iter__(self):
-        # import ipdb; ipdb.set_trace()
         for f in self.field_list:
             if isinstance(f, basestring):
                 renderer = self.view.request.registry.queryAdapter(get_type(self.obj, f), IColumnRenderer)
@@ -226,6 +222,4 @@ def register_adapters(reg):
     reg.registerAdapter(StringRenderer, (Integer,), IColumnRenderer)
     reg.registerAdapter(StringRenderer, (String,), IColumnRenderer)
     reg.registerAdapter(BoolRenderer, (Boolean,), IColumnRenderer)
-    # reg.registerAdapter(WTFieldXmlSerializer, (Field,), IXmlSerializer)
-    # reg.registerAdapter(WTTextareaXmlSerializer, (TextAreaField,), IXmlSerializer)
     

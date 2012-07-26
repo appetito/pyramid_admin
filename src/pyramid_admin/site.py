@@ -17,7 +17,6 @@ class AdminSite(object):
         self.context = context
         self.request = request
         self.parts = request.matchdict
-        # import ipdb; ipdb.set_trace()
         self.session = self.request.registry.queryUtility(ISqlaSessionFactory)()
 
     def __call__(self):
@@ -27,8 +26,6 @@ class AdminSite(object):
         action = self.parts.get('action', 'list')
         if model_name:
             admin_view = self.request.registry.queryUtility(IAdminView, model_name)
-            # import ipdb; ipdb.set_trace()
-            # import ipdb; ipdb.set_trace()
             if admin_view is None:
                 raise HTTPNotFound
 

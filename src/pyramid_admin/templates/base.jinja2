@@ -72,7 +72,7 @@
               <li class="nav-header">Models</li>
               {% for name, view_class in site.get_views() %}
                 <li {% if view.__class__ == view_class %} class="active"{% endif %}>
-                  <a href="{{ site.url(name=name) }}">{{ view_class.__title__ }}</a>
+                  <a href="{{ site.url(name=name) }}">{{ view_class.title }}</a>
                 </li>
               {% endfor %}
             </ul>
