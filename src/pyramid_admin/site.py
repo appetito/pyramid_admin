@@ -28,12 +28,16 @@ class AdminSite(object):
         if model_name:
             admin_view = self.request.registry.queryUtility(IAdminView, model_name)
             # import ipdb; ipdb.set_trace()
+            # import ipdb; ipdb.set_trace()
             if admin_view is None:
                 raise HTTPNotFound
 
             admin_view = admin_view(self, self.context, self.request)
             result = admin_view()
-            self.session.commit()
+            try:
+                self.session.commit()
+            except AssertionError:
+                pass
             return result
 
         else:
