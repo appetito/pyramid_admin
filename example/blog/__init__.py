@@ -7,7 +7,8 @@ from wtforms import *
 
 from blog.models import DBSession, metadata, User, Post
 
-from pyramid_admin.views import AdminView, LikeFilter, BoolFilter
+from pyramid_admin.views import AdminView
+from pyramid_admin.filters import LikeFilter, BoolFilter
 
 def session_factory():
     return DBSession

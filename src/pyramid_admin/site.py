@@ -30,16 +30,12 @@ class AdminSite(object):
             # import ipdb; ipdb.set_trace()
             if admin_view is None:
                 raise HTTPNotFound
-            if hasattr(admin_view, action) and callable(getattr(admin_view, action)):
-                admin_view = admin_view(self, self.context, self.request)
-                act =  getattr(admin_view, action)
-                result = act()
-                result.update({'request': self.request, 'view': admin_view, 'site': self})
-                renderer = act.__action_params__[0]['renderer']
-                self.session.commit()
-                return render_to_response(renderer, result)
-            else:
-                raise HTTPNotFound
+
+            admin_view = admin_view(self, self.context, self.request)
+            result = admin_view()
+            self.session.commit()
+            return result
+
         else:
             return self.index()
 

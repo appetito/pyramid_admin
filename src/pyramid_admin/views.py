@@ -15,100 +15,34 @@ def action(name=None, **kw):
     def _wrapper(fn):
         kw['name'] = name or fn.__name__
         kw['fn_name'] = fn.__name__
-        if hasattr(fn, '__action_params__'):
-            fn.__action_params__.append(kw)
-        else:
-            fn.__action_params__ = [kw]
+        fn.__action_params__ = kw
         return fn
     return _wrapper
 
+class AdminViewMeta(type):
 
-class QueryFilter(object):
-
-    title="Filter"
-
-    def __init__(self, field_name):
-        self.field_name = field_name
-        self.id = field_name #XXX 
-
-    def apply(self, request, query, model):
-        return query
-
-    def update_url(self, url):
-        return url
-
-    def display(self, request):
-        return ""
-
-
-class LikeFilter(QueryFilter):
-
-    def __init__(self, field_name, title=None, pattern="%%%s%%"):
-        self.field_name = field_name
-        self.pattern = pattern
-        self.id = field_name #XXX 
-        self.term = ""
-        self.title = title or "%s like an:" % field_name.title()
-
-
-    def apply(self, request, query, model):
-        if self.term:
-            field = getattr(model, self.field_name)
-            return query.filter(field.ilike(self.pattern % self.term))
-        return query
-
-    def activate(self, request):
-        term = request.GET.get(self.id)
-        if term:
-            self.is_active=True
-        self.term = term
-
-    def display(self):
-        inp = HTML.tag('input', type="text", name=self.id, value=self.term, class_="filter_input")
-        return Markup(inp)
-
-
-class BoolFilter(QueryFilter):
-
-    def __init__(self, field_name, true="True", false="False", title=None):
-        self.field_name = field_name
-        self.id = field_name #XXX 
-        self.true = true
-        self.false = false
-        self.title = title or "%s is:" % field_name.title()
-
-    def apply(self, request, query, model):
-        if self.is_active:
-            field = getattr(model, self.field_name)
-            return query.filter(field == self.val)
-        return query
-
-    def activate(self, request):
-        val = request.GET.get(self.id)
-        if val:
-            self.is_active=True
-        else:
-            self.is_active = False
-        self.val = val == 't'
-
-    def display(self):
-        if self.val:
-            inp1 = HTML.tag('input', type="radio", name=self.id, value="f")
-            inp2 = HTML.tag('input', type="radio", name=self.id, value="t", checked="checked")
-        else:
-            inp1 = HTML.tag('input', type="radio", name=self.id, value="f", checked="checked")
-            inp2 = HTML.tag('input', type="radio", name=self.id, value="t")
-        if not self.is_active:
-            inp1 = HTML.tag('input', type="radio", name=self.id, value="f")
-            inp2 = HTML.tag('input', type="radio", name=self.id, value="t")
-        return Markup('<label class="radio">%s%s</label><label class="radio">%s%s</label>' % (inp1, self.false, inp2, self.true))
+    def __new__(cls, name, bases, dct):
+        ncl = type.__new__(cls, name, bases, dct)
+        ncl.__actions__ = {}
+        for name in dir(ncl):
+            val = getattr(ncl, name, None)
+            if callable(val) and hasattr(val, '__action_params__'):
+                ncl.__actions__[val.__action_params__["name"]] = val
+        # import ipdb; ipdb.set_trace()
+        return ncl
 
 class AdminView(object):
     """Basic admin class-based view"""
 
+    __metaclass__ = AdminViewMeta
+
     field_list = ['id', unicode]
     list_links = ['id']
     filters = []
+
+    # def __new__(cls, *arg, **kw):
+    #     import ipdb; ipdb.set_trace()
+    #     super(AdminView, cls).__new__()
 
     def __init__(self, site, context, request):
         self.site = site
@@ -120,6 +54,13 @@ class AdminView(object):
         for i, f in enumerate(self.filters):
             f.id = 'f%s' % i
             f.activate(self.request)
+
+    def __call__(self):
+        action_name = self.parts.get("action", "list")
+        action = self.__actions__.get(action_name, None)
+        if action is None or not callable(action):
+            raise HTTPNotFound
+        return action(self)
 
     def get_obj(self):
         obj = self.site.session.query(self.model).filter(self.model.id==self.parts['obj_id']).first()
@@ -209,8 +150,6 @@ class AdminView(object):
     def fields(self, obj):
         return TableRow(obj, self, self.field_list, self.list_links)
             
-
-
     def table_title(self, field_name):
         url = self.request.path_qs
         url = util.update_params(url, order=field_name, desc=None)
