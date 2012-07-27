@@ -3,13 +3,25 @@
 from functools import partial
 
 from pyramid.httpexceptions import HTTPFound, HTTPNotFound
-from pyramid.renderers import render_to_response
+from pyramid.renderers import render_to_response, render
+from pyramid.response import Response
 from jinja2 import Markup
 from webhelpers import util, paginate
 from webhelpers.html import HTML
 
 from pyramid_admin.interfaces import IColumnRenderer
 
+# def render_iter(values, renderer):
+def render_iter(resp):
+    yield render(resp.renderer, resp.values)
+
+class DeferResponse(Response):
+
+    def __init__(self, values, renderer, app_iter=None, **kw):
+        self.renderer = renderer
+        self.values = values
+        super(DeferResponse, self).__init__(app_iter=render_iter(self), **kw)
+        
 
 def action(name=None, **kw):
     """action decorator"""
@@ -40,6 +52,7 @@ class AdminView(object):
     list_links = ['id']
     filters = []
     items_per_page = 20
+    override = []
 
     def __init__(self, site, context, request):
         self.site = site
@@ -56,10 +69,16 @@ class AdminView(object):
         action = self.__actions__.get(action_name, None)
         if action is None or not callable(action):
             raise HTTPNotFound
+        result = action(self)
+        registry = self.request.registry
+        response = registry.queryAdapterOrSelf(result, IResponse)
+        if response is None:
+            renderer = action.__action_params__['renderer']
+            return render_to_response(renderer, result)
         result =  action(self)
         result.update({'request': self.request, 'view': self, 'site': self.site})
         renderer = action.__action_params__['renderer']
-        return render_to_response(renderer, result)
+        return DeferResponse(renderer, result)
 
     @property
     def title(self):

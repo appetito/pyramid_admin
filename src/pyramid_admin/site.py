@@ -31,6 +31,8 @@ class AdminSite(object):
 
             admin_view = admin_view(self, self.context, self.request)
             result = admin_view()
+            # result.renderer = "pyramid_admin:templates/index.jinja2"
+            self.session.commit()
             try:
                 self.session.commit()
             except AssertionError:
