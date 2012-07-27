@@ -28,7 +28,7 @@
             <fieldset>
             {% for field in obj_form %}
                 <div class="control-group {% if field.errors %}error{% endif %}">
-                    {{ field.label(class="control-label") }}
+                    <label class="control-label">{{ field.label.text }} {% if field.flags.required %}*{% endif %}</label>
                     <div class="controls">
                         {{ field }}{{ field|errors }}
                     </div>

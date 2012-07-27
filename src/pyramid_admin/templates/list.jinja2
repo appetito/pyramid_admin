@@ -67,6 +67,7 @@
 
 <!-- [ FILTERS ] -->
 {% block sidebar_extra %}
+    {% if request.view.filters %}
     <div>
         <form action="">
             <ul class="nav nav-list">
@@ -79,6 +80,7 @@
             <a href="{{ request.view.url() }}" class="btn">Reset</a>
         </form>
     </div>
+    {% end %}
 {% endblock %}
 <!-- [ /FILTERS ] -->
 
