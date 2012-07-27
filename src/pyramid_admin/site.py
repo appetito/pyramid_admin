@@ -16,6 +16,7 @@ class AdminSite(object):
     def __init__(self, context, request):
         self.context = context
         self.request = request
+        self.request.site = self
         self.parts = request.matchdict
         self.session = self.request.registry.queryUtility(ISqlaSessionFactory)()
 
@@ -31,8 +32,8 @@ class AdminSite(object):
 
             admin_view = admin_view(self, self.context, self.request)
             result = admin_view()
-            # result.renderer = "pyramid_admin:templates/index.jinja2"
-            self.session.commit()
+            if isinstance(result, tuple):
+                result = render_to_response(*result, request=self.request)
             try:
                 self.session.commit()
             except AssertionError:
@@ -52,7 +53,7 @@ class AdminSite(object):
         return False        
 
     def index(self):
-        return render_to_response("pyramid_admin:templates/index.jinja2", {'request': self.request, 'site': self})
+        return render_to_response("pyramid_admin:templates/index.jinja2", request=self.request)
 
     def get_views(self):
         return self.request.registry.getUtilitiesFor(IAdminView)

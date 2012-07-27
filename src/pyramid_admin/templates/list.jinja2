@@ -7,7 +7,7 @@
     {% block functions %}
     <p>
         <div class="btn-group">
-            <a class="btn btn-primary" href="{{ view.url(action="new") }}">Добавить</a> 
+            <a class="btn btn-primary" href="{{ request.view.url(action="new") }}">Добавить</a> 
         </div>
     </p>
     {% endblock %}
@@ -17,8 +17,8 @@
         <table class="table table-bordered">
             <thead>
                 <tr>
-                    {% for f in view.field_list %}
-                        <th>{{ view.table_title(f) }}</th>
+                    {% for f in request.view.field_list %}
+                        <th>{{ request.view.table_title(f) }}</th>
                     {% endfor %}
                 </tr>
             </thead>
@@ -26,7 +26,7 @@
                 {% for obj in page.items %}
                     <tr>
 
-                        {% for f in view.fields(obj) %}
+                        {% for f in request.view.fields(obj) %}
                             <td>{{ f[1] }}</td>
                         {% endfor %}
                     </tr>
@@ -46,17 +46,17 @@
             {% if page.page <= 1 %}
             <li class="disabled"><a>&lt;&lt;</a></li>
             {% else %}
-            <li><a href="{{ view.page_url(page.page - 1) }}">&lt;&lt;</a></li>
+            <li><a href="{{ request.view.page_url(page.page - 1) }}">&lt;&lt;</a></li>
             {% endif %}
             {% for n in range(1, page.page_count + 1) %}
                 <li {% if page.page == n %} class="active" {% endif %}>
-                    <a href="{{ view.page_url(n) }}">{{ n }}</a>
+                    <a href="{{ request.view.page_url(n) }}">{{ n }}</a>
                 </li>
             {% endfor %}
             {% if page.page > page.page_count - 1 %}
                 <li class="disabled"> <a>&gt;&gt;</a></li>
             {% else %}
-                <li><a href="{{ view.page_url(page.page + 1) }}">&gt;&gt;</a></li>
+                <li><a href="{{ request.view.page_url(page.page + 1) }}">&gt;&gt;</a></li>
             {% endif %}
           </ul>
         </div>
@@ -71,12 +71,12 @@
         <form action="">
             <ul class="nav nav-list">
               <li class="nav-header">Filters</li>
-                {% for f in view.filters %}
+                {% for f in request.view.filters %}
                     <li><h4>{{ f.title }}</h4></li>
                     <li>{{ f.display() }}</li>
                 {% endfor %}
             <input type="submit" class="btn" value="Apply"/>
-            <a href="{{ view.url() }}" class="btn">Reset</a>
+            <a href="{{ request.view.url() }}" class="btn">Reset</a>
         </form>
     </div>
 {% endblock %}

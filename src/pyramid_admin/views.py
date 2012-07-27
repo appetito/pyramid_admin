@@ -3,25 +3,14 @@
 from functools import partial
 
 from pyramid.httpexceptions import HTTPFound, HTTPNotFound
-from pyramid.renderers import render_to_response, render
-from pyramid.response import Response
+from pyramid.renderers import render_to_response
+from pyramid.response import Response, IResponse
 from jinja2 import Markup
 from webhelpers import util, paginate
 from webhelpers.html import HTML
 
 from pyramid_admin.interfaces import IColumnRenderer
 
-# def render_iter(values, renderer):
-def render_iter(resp):
-    yield render(resp.renderer, resp.values)
-
-class DeferResponse(Response):
-
-    def __init__(self, values, renderer, app_iter=None, **kw):
-        self.renderer = renderer
-        self.values = values
-        super(DeferResponse, self).__init__(app_iter=render_iter(self), **kw)
-        
 
 def action(name=None, **kw):
     """action decorator"""
@@ -58,6 +47,7 @@ class AdminView(object):
         self.site = site
         self.context = context
         self.request = request
+        self.request.view = self
         self.parts = request.matchdict
         self.list_order = {'field': self.request.GET.get('order'), 'desc': self.request.GET.get('desc')}
         for i, f in enumerate(self.filters):
@@ -72,18 +62,18 @@ class AdminView(object):
         result = action(self)
         registry = self.request.registry
         response = registry.queryAdapterOrSelf(result, IResponse)
-        if response is None:
-            renderer = action.__action_params__['renderer']
-            return render_to_response(renderer, result)
-        result =  action(self)
-        result.update({'request': self.request, 'view': self, 'site': self.site})
+        if response is not None:
+            return response
+        self.process_response(result)
         renderer = action.__action_params__['renderer']
-        return DeferResponse(renderer, result)
+        return renderer, result
+
+    def process_response(self, data):
+        pass
 
     @property
     def title(self):
         return self.model.__name__ + " view" 
-
 
     def get_obj(self):
         obj = self.site.session.query(self.model).filter(self.model.id==self.parts['obj_id']).first()
@@ -131,7 +121,7 @@ class AdminView(object):
         page = paginate.Page(query, page=page_num, items_per_page=self.items_per_page)
         objects = query.all()
 
-        return {'objects': objects, 'page':page, 'view':self}
+        return {'objects': objects, 'page':page}
 
     @action(renderer='pyramid_admin:templates/edit.jinja2')
     def edit(self):
@@ -145,7 +135,7 @@ class AdminView(object):
                 raise HTTPFound(self.url())
         else:
             form = self.get_form(obj)
-        return {'obj':obj, 'obj_form': form, 'view':self}
+        return {'obj':obj, 'obj_form': form}
 
     @action(renderer="pyramid_admin:templates/edit.jinja2")
     def new(self):
@@ -157,7 +147,7 @@ class AdminView(object):
                 form.populate_obj(obj)
                 self.site.session.add(obj)
                 raise HTTPFound(self.url())
-        return {'obj':None, 'obj_form': form, 'view':self}
+        return {'obj':None, 'obj_form': form}
 
     @action(request_method="POST")
     def delete(self):

@@ -24,18 +24,22 @@ def add_admin_site(config, prefix, view=AdminSite, title="Admin Site", session_f
     config.add_view(view, route_name='admin_model_action')
     config.add_view(view, route_name='admin_model_obj_action')
 
+
 def add_admin_view(config, name, admin_view):
     admin_view = config.maybe_dotted(admin_view)
     admin_view.__view_name__ = name
     config.registry.registerUtility(admin_view, IAdminView, name)
 
+
 def set_sqla_session_factory(config, factory):
     factory = config.maybe_dotted(factory)
     config.registry.registerUtility(factory, ISqlaSessionFactory)
 
+
 def set_admin_authz_policy(config, authz_policy):
     authz_policy = config.maybe_dotted(authz_policy)
     config.registry.registerUtility(authz_policy, IAdminAuthzPolicy)
+
 
 def includeme(config):
     config.add_directive('set_admin_authz_policy', set_admin_authz_policy)

@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>{{ site.title }}</title>
+    <title>{{ request.site.title }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
@@ -39,7 +39,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </a>
-          <a class="brand" href="{{ site.url() }}">{{ site.title }}</a>
+          <a class="brand" href="{{ request.site.url() }}">{{ request.site.title }}</a>
           <!--
           <div class="btn-group pull-right">
             <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
@@ -70,9 +70,9 @@
           <div class="well sidebar-nav">
             <ul class="nav nav-list">
               <li class="nav-header">Models</li>
-              {% for name, view_class in site.get_views() %}
-                <li {% if view.__class__ == view_class %} class="active"{% endif %}>
-                  <a href="{{ site.url(name=name) }}">{{ view_class.title }}</a>
+              {% for name, view_class in request.site.get_views() %}
+                <li {% if request.view.__class__ == view_class %} class="active"{% endif %}>
+                  <a href="{{ request.site.url(name=name) }}">{{ view_class.title }}</a>
                 </li>
               {% endfor %}
             </ul>
