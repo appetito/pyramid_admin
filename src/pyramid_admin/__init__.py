@@ -3,7 +3,7 @@ from jinja2 import Markup
 from zope.interface import Interface
 
 from pyramid_admin.site import AdminSite, IAdminView, ISqlaSessionFactory, IAdminAuthzPolicy
-from pyramid_admin.views import register_adapters
+from pyramid_admin.views import register_adapters, suggest_view
 
 
 
@@ -23,6 +23,7 @@ def add_admin_site(config, prefix, view=AdminSite, title="Admin Site", session_f
     config.add_view(view, route_name='admin_model')
     config.add_view(view, route_name='admin_model_action')
     config.add_view(view, route_name='admin_model_obj_action')
+    config.add_view(suggest_view, name='_model_suggest', renderer='json')
 
 
 def add_admin_view(config, name, admin_view):

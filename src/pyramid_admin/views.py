@@ -1,6 +1,10 @@
 # views.py
 
 from functools import partial
+import urllib
+import datetime
+
+from sqlalchemy import orm, or_, types
 
 from pyramid.httpexceptions import HTTPFound, HTTPNotFound
 from pyramid.renderers import render_to_response
@@ -132,7 +136,8 @@ class AdminView(object):
             if form.validate():
                 form.populate_obj(obj)
                 self.site.session.add(obj)
-                raise HTTPFound(self.url())
+                self.site.session.flush()
+                return HTTPFound(self.url())
         else:
             form = self.get_form(obj)
         return {'obj':obj, 'obj_form': form}
@@ -146,7 +151,9 @@ class AdminView(object):
                 obj = self.model()
                 form.populate_obj(obj)
                 self.site.session.add(obj)
-                raise HTTPFound(self.url())
+                self.site.session.flush()
+                # import ipdb; ipdb.set_trace()
+                return HTTPFound(self.url())
         return {'obj':None, 'obj_form': form}
 
     @action(request_method="POST")
@@ -232,4 +239,49 @@ def register_adapters(reg):
     reg.registerAdapter(StringRenderer, (Integer,), IColumnRenderer)
     reg.registerAdapter(StringRenderer, (String,), IColumnRenderer)
     reg.registerAdapter(BoolRenderer, (Boolean,), IColumnRenderer)
+
+
+# REGISTERED_MODELS = dict(map(lambda t:
+#     (t[0].class_.dotted_classname.rsplit('.', 1)[-1].lower(), t[0].class_), orm.mapperlib._mapper_registry.items()))
+
+
+def to_dict(obj):
+    res = {}
+    for c in obj.__table__.columns:
+        v = getattr(obj, c.name)
+        if isinstance(v, (datetime.datetime, datetime.date)):
+                v = v.isoformat()
+        res[c.name] = v
+    return res
+
+
+def suggest_view(context, request):
+    REGISTERED_MODELS = dict(map(lambda t:
+    (t[0].class_.dotted_classname.rsplit('.', 1)[-1].lower(), t[0].class_), orm.mapperlib._mapper_registry.items()))
+    ret = []
+
+    mtype = request.GET.get('type')
+    Model = REGISTERED_MODELS.get(mtype)
+    # import ipdb; ipdb.set_trace()
+    if Model is None:
+        return ret
+
+    args = []
+    for k, v in request.GET.items():
+        if k == 'type' or not v:
+            continue
+        try:
+            if not isinstance(Model.__mapper__.columns.get(k).type,
+                    (types.VARCHAR, types.TEXT)):
+                continue
+
+            attr = getattr(Model, k)
+            val = u'%%%s%%' %(urllib.unquote(v))
+            args.append(attr.ilike(val))
+        except AttributeError:
+            continue
+    if args:
+        ret = [to_dict(i) for i in Model.suggest_query().filter(or_(*args)).limit(10).all()]
+
+    return ret
     
