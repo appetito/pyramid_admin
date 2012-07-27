@@ -3,13 +3,25 @@
 from functools import partial
 
 from pyramid.httpexceptions import HTTPFound, HTTPNotFound
-from pyramid.renderers import render_to_response
+from pyramid.renderers import render_to_response, render
+from pyramid.response import Response
 from jinja2 import Markup
 from webhelpers import util, paginate
 from webhelpers.html import HTML
 
 from pyramid_admin.interfaces import IColumnRenderer
 
+# def render_iter(values, renderer):
+def render_iter(resp):
+    yield render(resp.renderer, resp.values)
+
+class DeferResponse(Response):
+
+    def __init__(self, values, renderer, app_iter=None, **kw):
+        self.renderer = renderer
+        self.values = values
+        super(DeferResponse, self).__init__(app_iter=render_iter(self), **kw)
+        
 
 def action(name=None, **kw):
     """action decorator"""
@@ -41,9 +53,7 @@ class AdminView(object):
     list_links = ['id']
     filters = []
 
-    # def __new__(cls, *arg, **kw):
-    #     import ipdb; ipdb.set_trace()
-    #     super(AdminView, cls).__new__()
+    override = []
 
     def __init__(self, site, context, request):
         self.site = site
@@ -61,15 +71,20 @@ class AdminView(object):
         action = self.__actions__.get(action_name, None)
         if action is None or not callable(action):
             raise HTTPNotFound
+        result = action(self)
+        registry = self.request.registry
+        response = registry.queryAdapterOrSelf(result, IResponse)
+        if response is None:
+            renderer = action.__action_params__['renderer']
+            return render_to_response(renderer, result)
         result =  action(self)
         result.update({'request': self.request, 'view': self, 'site': self.site})
         renderer = action.__action_params__['renderer']
-        return render_to_response(renderer, result)
+        return DeferResponse(renderer, result)
 
 
     def get_obj(self):
         obj = self.site.session.query(self.model).filter(self.model.id==self.parts['obj_id']).first()
-        # import ipdb; ipdb.set_trace() # XXX BEARKPOINT
         if not obj:
             raise HTTPNotFound
         return obj
@@ -177,7 +192,6 @@ class TableRow(object):
         self.list_links = list_links
 
     def __iter__(self):
-        # import ipdb; ipdb.set_trace()
         for f in self.field_list:
             if isinstance(f, basestring):
                 renderer = self.view.request.registry.queryAdapter(get_type(self.obj, f), IColumnRenderer)

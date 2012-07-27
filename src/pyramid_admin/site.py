@@ -17,7 +17,6 @@ class AdminSite(object):
         self.context = context
         self.request = request
         self.parts = request.matchdict
-        # import ipdb; ipdb.set_trace()
         self.session = self.request.registry.queryUtility(ISqlaSessionFactory)()
 
     def __call__(self):
@@ -33,6 +32,7 @@ class AdminSite(object):
 
             admin_view = admin_view(self, self.context, self.request)
             result = admin_view()
+            result.renderer = "pyramid_admin:templates/index.jinja2"
             self.session.commit()
             return result
 
