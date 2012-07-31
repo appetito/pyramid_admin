@@ -164,6 +164,12 @@ class AdminView(object):
         self.site.session.delete(obj)
         return HTTPFound(self.url())
 
+    @action(request_method="POST")
+    def bulk_delete(self):
+        ids = self.request.POST.getall('select')
+        objects = self.site.session.query(self.model).filter(get_pk_column(self.model).in_(ids)).all()
+        return HTTPFound(self.url())
+
     def _build_form(self):
         """ we must introspect model fields and build form"""
         raise NotImplementedError

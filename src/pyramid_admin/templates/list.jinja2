@@ -1,5 +1,20 @@
 {% extends "pyramid_admin:templates/base.jinja2" %}
 
+{% block extra_js %}
+    {{ super() }}
+    <script type="text/javascript">
+        $(document).ready(function(){
+            $('.bulk-action').click(function(){
+                console.log(this);
+                var form = $(this).closest('form');
+                form.attr('action', $(this).attr('href'));
+                form.submit();
+                return false;
+            });
+        });
+    </script>
+{% endblock %}
+
 {% block content %}
 
     
@@ -10,16 +25,14 @@
 
         <div class="btn-group span4">
             <a class="btn btn-primary" href="{{ request.view.url(action="new") }}">Добавить</a> 
-        </div>
-
-        <div class="btn-group pull-right">
+       
             <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
             Action
             <span class="caret"></span>
           </a>
           <ul class="dropdown-menu">
             <!-- dropdown menu links -->
-            <li><a href="/act/">bulk delete</a></li>
+            <li><a class="bulk-action" href="{{ request.view.url(action='bulk_delete') }}">bulk delete</a></li>
           </ul>
         </div>
         
