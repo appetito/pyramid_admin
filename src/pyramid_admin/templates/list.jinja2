@@ -3,39 +3,54 @@
 {% block content %}
 
     
+    <form action="" method="post">
 
     {% block functions %}
-    <p>
-        <div class="btn-group">
+    <div class="row-fluid">
+
+        <div class="btn-group span4">
             <a class="btn btn-primary" href="{{ request.view.url(action="new") }}">Добавить</a> 
         </div>
-    </p>
+
+        <div class="btn-group pull-right">
+            <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+            Action
+            <span class="caret"></span>
+          </a>
+          <ul class="dropdown-menu">
+            <!-- dropdown menu links -->
+            <li><a href="/act/">bulk delete</a></li>
+          </ul>
+        </div>
+        
+    </div>
     {% endblock %}
 
     {% block list %}
         <p>items {{ page.first_item or 0 }} - {{ page.last_item or 0 }} of {{ page.item_count or 0 }}</p>
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    {% for f in request.view.field_list %}
-                        <th>{{ request.view.table_title(f) }}</th>
-                    {% endfor %}
-                </tr>
-            </thead>
-            <tbody>
-                {% for obj in page.items %}
+            <table class="table table-bordered">
+                <thead>
                     <tr>
-
-                        {% for f in request.view.fields(obj) %}
-                            <td>{{ f[1] }}</td>
+                        <th><input type="checkbox" id="select_all"/></th>
+                        {% for f in request.view.field_list %}
+                            <th>{{ request.view.table_title(f) }}</th>
                         {% endfor %}
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-       
+                </thead>
+                <tbody>
+                    {% for obj in page.items %}
+                        <tr>
+                            <th><input type="checkbox" name="select" value="{{ request.view.pk(obj) }}"/></th>
+                            {% for f in request.view.fields(obj) %}
+                                <td>{{ f[1] }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
     {% endblock %}
 
+    </form>
             
 
     {% block pager %}

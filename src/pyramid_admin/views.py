@@ -14,6 +14,7 @@ from webhelpers import util, paginate
 from webhelpers.html import HTML
 
 from pyramid_admin.interfaces import IColumnRenderer
+from pyramid_admin.utils import get_pk_column, get_pk_value
 
 
 def action(name=None, **kw):
@@ -80,7 +81,8 @@ class AdminView(object):
         return self.model.__name__ + " view" 
 
     def get_obj(self):
-        obj = self.site.session.query(self.model).filter(self.model.id==self.parts['obj_id']).first()
+        pk_column = get_pk_column(self.model)
+        obj = self.site.session.query(self.model).filter(pk_column==self.parts['obj_id']).first()
         if not obj:
             raise HTTPNotFound
         return obj
@@ -106,11 +108,11 @@ class AdminView(object):
         form_class = self._build_form()
         return form_class(formdata, obj)
 
-    def url(self, action=None, obj_id=None, **q):
+    def url(self, action=None, obj=None, **q):
         """
         build url for view action or object action (if id param is not None)
         """
-        return self.site.url(name=self.__view_name__, action=action, obj_id=obj_id, **q)
+        return self.site.url(name=self.__view_name__, action=action, obj=obj, **q)
 
     def page_url(self, page_num):
             url = self.request.path_qs
@@ -160,11 +162,14 @@ class AdminView(object):
     def delete(self):
         obj = self.get_obj()
         self.site.session.delete(obj)
-        raise HTTPFound(self.url())
+        return HTTPFound(self.url())
 
     def _build_form(self):
         """ we must introspect model fields and build form"""
         raise NotImplementedError
+
+    def pk(self, obj):
+        return get_pk_value(obj)
 
     def fields(self, obj):
         return TableRow(obj, self, self.field_list, self.list_links)
@@ -204,7 +209,7 @@ class TableRow(object):
             yield (f, val)
 
     def _wrap_link_field(self, obj, value):
-        return Markup('<a href="%s">%s</a>' % (self.view.url(action="edit", obj_id=obj.id), value))
+        return Markup('<a href="%s">%s</a>' % (self.view.url(action="edit", obj=obj), value))
 
 
 def get_type(obj, fieldname):
@@ -239,10 +244,6 @@ def register_adapters(reg):
     reg.registerAdapter(StringRenderer, (Integer,), IColumnRenderer)
     reg.registerAdapter(StringRenderer, (String,), IColumnRenderer)
     reg.registerAdapter(BoolRenderer, (Boolean,), IColumnRenderer)
-
-
-# REGISTERED_MODELS = dict(map(lambda t:
-#     (t[0].class_.dotted_classname.rsplit('.', 1)[-1].lower(), t[0].class_), orm.mapperlib._mapper_registry.items()))
 
 
 def to_dict(obj):

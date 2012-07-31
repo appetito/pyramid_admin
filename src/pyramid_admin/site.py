@@ -10,6 +10,8 @@ from pyramid_admin.interfaces import IAdminView
 from pyramid_admin.interfaces import ISqlaSessionFactory
 from pyramid_admin.interfaces import IAdminAuthzPolicy
 
+from pyramid_admin.utils import get_pk_value
+
 
 class AdminSite(object):
 
@@ -59,11 +61,12 @@ class AdminSite(object):
         return self.request.registry.getUtilitiesFor(IAdminView)
 
 
-    def url(self, name=None, action=None, obj_id=None, **q):
+    def url(self, name=None, action=None, obj=None, **q):
         """
-        build url for view action or object action (if obj_id param is not None)
+        build url for view action or object action (if obj param is not None)
         """
-        if name and action and obj_id:
+        if name and action and obj:
+            obj_id = get_pk_value(obj)
             fn = partial(self.request.route_path, "admin_model_obj_action", model_name=name, action=action, obj_id=obj_id)
         elif name and action:
             fn = partial(self.request.route_path, "admin_model_action", model_name=name, action=action)

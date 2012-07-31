@@ -39,12 +39,17 @@
                         <input class="btn btn-primary" type="submit" value="Сохранить">
                         <a class="btn" href="{{ request.view.url() }}">Отмена</a>
                         {% if obj %}
-                            <a class="b-delete-button btn btn-danger" href="javascript:void(0)" data-url="{{ request.view.url(action="delete", obj_id=obj.id) }}">Удалить</a>
+                            <a class="b-delete-button btn btn-danger"
+                             href="javascript:void(0)" 
+                             data-url="{{ request.view.url(action="delete", obj=obj) }}">
+                             Удалить
+                            </a>
                         {% endif %}
                     </div>
                 </div>
                 </fieldset>
         </form>
+     
     {% endblock %}
 
     {% block pager %}
