@@ -1,0 +1,19 @@
+{% extends "pyramid_admin:templates/base.jinja2" %}
+
+{% block content %}
+
+    <h1>Confirm object deletion</h1>
+
+    <h3>Object to delete:</h3>
+    <form action="" method="post">
+        <input type="hidden" name="confirmed" value="yes"/>
+        {% for obj in objects %}
+            <div class="control-group">
+                <input type="checkbox" name="select" value="{{ request.view.pk(obj) }}" checked="checked"/> {{ obj }}
+            </div>
+        {% endfor %}
+        <div class="control-group">
+                <input class="btn btn-primary" type="submit" value="Yes, delete choosen objects!"/>
+        </div>
+    </form>
+{% endblock %}

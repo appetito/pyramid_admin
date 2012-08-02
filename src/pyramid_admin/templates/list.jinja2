@@ -5,11 +5,20 @@
     <script type="text/javascript">
         $(document).ready(function(){
             $('.bulk-action').click(function(){
-                console.log(this);
                 var form = $(this).closest('form');
                 form.attr('action', $(this).attr('href'));
                 form.submit();
                 return false;
+            });
+
+             $('#select_all').change(function(){
+                var form = $(this).closest('form');
+                if($(this).is(':checked')){
+                    form.find("input[name=select]").attr('checked', true);
+                }else{
+                    form.find("input[name=select]").attr('checked', false);
+                }
+                
             });
         });
     </script>
@@ -32,7 +41,7 @@
           </a>
           <ul class="dropdown-menu">
             <!-- dropdown menu links -->
-            <li><a class="bulk-action" href="{{ request.view.url(action='bulk_delete') }}">bulk delete</a></li>
+            <li><a class="bulk-action" href="{{ request.view.url(action='bulk_delete') }}">Delete selected</a></li>
           </ul>
         </div>
         

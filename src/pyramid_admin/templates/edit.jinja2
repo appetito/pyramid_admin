@@ -36,13 +36,13 @@
             {% endfor %}
                 <div class="control-group">
                     <div class="controls">
-                        <input class="btn btn-primary" type="submit" value="Сохранить">
-                        <a class="btn" href="{{ request.view.url() }}">Отмена</a>
+                        <input class="btn btn-primary" type="submit" value="Save">
+                        <a class="btn" href="{{ request.view.url() }}">Cancel</a>
                         {% if obj %}
                             <a class="b-delete-button btn btn-danger"
                              href="javascript:void(0)" 
                              data-url="{{ request.view.url(action="delete", obj=obj) }}">
-                             Удалить
+                             Delete
                             </a>
                         {% endif %}
                     </div>

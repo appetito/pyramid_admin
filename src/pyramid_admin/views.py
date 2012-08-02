@@ -82,7 +82,7 @@ class AdminView(object):
 
     def get_obj(self):
         pk_column = get_pk_column(self.model)
-        obj = self.site.session.query(self.model).filter(pk_column==self.parts['obj_id']).first()
+        obj = self.site.session.query(self.model).get(self.parts['obj_id'])
         if not obj:
             raise HTTPNotFound
         return obj
@@ -125,16 +125,16 @@ class AdminView(object):
         query = self.apply_filters(query)
         page_num = self.request.GET.get('pg', 1)
         page = paginate.Page(query, page=page_num, items_per_page=self.items_per_page)
-        objects = query.all()
+        # objects = query.all()
 
-        return {'objects': objects, 'page':page}
+        return {'page':page}
 
     @action(renderer='pyramid_admin:templates/edit.jinja2')
     def edit(self):
         """generic edit form admin view"""
         obj = self.get_obj()
         if self.request.method == 'POST':
-            form = self.get_form(formdata=self.request.POST, obj=obj)
+            form = self.get_form(formdata=self.request.POST)
             if form.validate():
                 form.populate_obj(obj)
                 self.site.session.add(obj)
@@ -154,7 +154,6 @@ class AdminView(object):
                 form.populate_obj(obj)
                 self.site.session.add(obj)
                 self.site.session.flush()
-                # import ipdb; ipdb.set_trace()
                 return HTTPFound(self.url())
         return {'obj':None, 'obj_form': form}
 
@@ -164,10 +163,14 @@ class AdminView(object):
         self.site.session.delete(obj)
         return HTTPFound(self.url())
 
-    @action(request_method="POST")
+    @action(request_method="POST", renderer="pyramid_admin:templates/confirm_delete.jinja2")
     def bulk_delete(self):
         ids = self.request.POST.getall('select')
         objects = self.site.session.query(self.model).filter(get_pk_column(self.model).in_(ids)).all()
+        if 'confirmed' not in self.request.POST:
+            return {'bulk': True, "objects": objects}
+        for obj in objects:
+            self.site.session.delete(obj)
         return HTTPFound(self.url())
 
     def _build_form(self):
@@ -203,9 +206,12 @@ class TableRow(object):
 
     def __iter__(self):
         for f in self.field_list:
-            if isinstance(f, basestring):
+            if isinstance(f, basestring) and hasattr(self.obj, f):
                 renderer = self.view.request.registry.queryAdapter(get_type(self.obj, f), IColumnRenderer)
                 val = renderer(getattr(self.obj, f))
+                label = f
+            elif isinstance(f, basestring) and hasattr(self.view, 'column_' + f):
+                val = getattr(self.view, 'column_' + f)(self.obj)
                 label = f
             elif callable(f):
                 val = f(self.obj)
