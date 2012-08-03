@@ -10,7 +10,7 @@ requires=['pyramid>=1.3', 'pyramid_jinja2', 'wtforms', 'webhelpers']
 
 setup(name='pyramid_admin',
       version='0.1',
-      description='pyramid_admin',
+      description='admin (CRUD) interface for pyramid framework',
       long_description=README + '\n\n' +  CHANGES,
       classifiers=[
         "Programming Language :: Python",
@@ -27,6 +27,5 @@ setup(name='pyramid_admin',
       zip_safe=False,
       install_requires=requires,
       tests_require=requires,
-      test_suite="pyramid_admin",
-      paster_plugins=['pyramid'],
+      test_suite="pyramid_admin"
       )

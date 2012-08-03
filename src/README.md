@@ -1,4 +1,6 @@
 pyramid_admin
 =============
 
-automatic admin (CRUD) interface for pyramid framework
+admin (CRUD) interface for pyramid framework
+
+docs coming soon
