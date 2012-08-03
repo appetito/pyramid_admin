@@ -305,7 +305,7 @@ def suggest_view(context, request):
         except AttributeError:
             continue
 
-    query = getattr(Model, suggest_query, None)
+    query = Model.suggest_query() if hasattr(Model, "suggest_query") else None
     if not query:
         session = self.request.registry.queryUtility(ISqlaSessionFactory)()
         query = session.query(Model)

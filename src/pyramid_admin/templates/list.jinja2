@@ -43,6 +43,11 @@
           </a>
           <ul class="dropdown-menu">
             <!-- dropdown menu links -->
+            {% for act, title in request.view.bulk_actions %}
+                <li>
+                    <a class="bulk-action" href="{{ request.view.url(action=act) }}">{{ title}}</a>
+                </li>
+            {% endfor %}
             {% if request.view.is_allowed('delete') %}
                 <li><a class="bulk-action" href="{{ request.view.url(action='bulk_delete') }}">Delete selected</a></li>
             {% endif %}
