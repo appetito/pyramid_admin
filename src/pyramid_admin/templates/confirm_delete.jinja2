@@ -13,7 +13,8 @@
             </div>
         {% endfor %}
         <div class="control-group">
-                <input class="btn btn-primary" type="submit" value="Yes, delete choosen objects!"/>
+                <input class="btn btn-danger" type="submit" value="Yes, delete choosen objects!"/>
+                <a class="btn btn-primary" href="{{ request.view.url() }}">Cancel</a>
         </div>
     </form>
 {% endblock %}

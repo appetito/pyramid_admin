@@ -33,7 +33,9 @@
     <div class="row-fluid">
 
         <div class="btn-group span4">
-            <a class="btn btn-primary" href="{{ request.view.url(action="new") }}">Добавить</a> 
+            {% if request.view.is_allowed('new') %}
+                <a class="btn btn-primary" href="{{ request.view.url(action="new") }}">Добавить</a> 
+            {% endif %}
        
             <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
             Action
@@ -41,7 +43,9 @@
           </a>
           <ul class="dropdown-menu">
             <!-- dropdown menu links -->
-            <li><a class="bulk-action" href="{{ request.view.url(action='bulk_delete') }}">Delete selected</a></li>
+            {% if request.view.is_allowed('delete') %}
+                <li><a class="bulk-action" href="{{ request.view.url(action='bulk_delete') }}">Delete selected</a></li>
+            {% endif %}
           </ul>
         </div>
         

@@ -13,7 +13,7 @@ from jinja2 import Markup
 from webhelpers import util, paginate
 from webhelpers.html import HTML
 
-from pyramid_admin.interfaces import IColumnRenderer
+from pyramid_admin.interfaces import IColumnRenderer, ISqlaSessionFactory
 from pyramid_admin.utils import get_pk_column, get_pk_value
 
 
@@ -47,6 +47,8 @@ class AdminView(object):
     filters = []
     items_per_page = 20
     override = []
+    
+    not_allowed = []
 
     def __init__(self, site, context, request):
         self.site = site
@@ -61,6 +63,8 @@ class AdminView(object):
 
     def __call__(self):
         action_name = self.parts.get("action", "list")
+        if action_name in self.not_allowed:
+            raise HTTPNotFound
         action = self.__actions__.get(action_name, None)
         if action is None or not callable(action):
             raise HTTPNotFound
@@ -79,6 +83,9 @@ class AdminView(object):
     @property
     def title(self):
         return self.model.__name__ + " view" 
+
+    def is_allowed(self, action):
+        return action not in self.not_allowed
 
     def get_obj(self):
         pk_column = get_pk_column(self.model)
@@ -125,8 +132,6 @@ class AdminView(object):
         query = self.apply_filters(query)
         page_num = self.request.GET.get('pg', 1)
         page = paginate.Page(query, page=page_num, items_per_page=self.items_per_page)
-        # objects = query.all()
-
         return {'page':page}
 
     @action(renderer='pyramid_admin:templates/edit.jinja2')
@@ -165,6 +170,8 @@ class AdminView(object):
 
     @action(request_method="POST", renderer="pyramid_admin:templates/confirm_delete.jinja2")
     def bulk_delete(self):
+        if not self.is_allowed('delete'):
+            raise HTTPNotFound
         ids = self.request.POST.getall('select')
         objects = self.site.session.query(self.model).filter(get_pk_column(self.model).in_(ids)).all()
         if 'confirmed' not in self.request.POST:
@@ -184,6 +191,11 @@ class AdminView(object):
         return TableRow(obj, self, self.field_list, self.list_links)
             
     def table_title(self, field_name):
+        # import ipdb; ipdb.set_trace()
+        if not isinstance(field_name, basestring) or field_name not in self.model.__table__.columns:
+            if field_name == unicode:
+                return self.title
+            return field_name
         url = self.request.path_qs
         url = util.update_params(url, order=field_name, desc=None)
         order_ico = ''
@@ -270,15 +282,14 @@ def to_dict(obj):
 
 def suggest_view(context, request):
     REGISTERED_MODELS = dict(map(lambda t:
-    (t[0].class_.dotted_classname.rsplit('.', 1)[-1].lower(), t[0].class_), orm.mapperlib._mapper_registry.items()))
+                (t[0].class_.dotted_classname.rsplit('.', 1)[-1].lower(), t[0].class_), orm.mapperlib._mapper_registry.items()
+            ))
     ret = []
 
     mtype = request.GET.get('type')
     Model = REGISTERED_MODELS.get(mtype)
-    # import ipdb; ipdb.set_trace()
     if Model is None:
         return ret
-
     args = []
     for k, v in request.GET.items():
         if k == 'type' or not v:
@@ -293,8 +304,13 @@ def suggest_view(context, request):
             args.append(attr.ilike(val))
         except AttributeError:
             continue
+
+    query = getattr(Model, suggest_query, None)
+    if not query:
+        session = self.request.registry.queryUtility(ISqlaSessionFactory)()
+        query = session.query(Model)
     if args:
-        ret = [to_dict(i) for i in Model.suggest_query().filter(or_(*args)).limit(10).all()]
+        ret = [to_dict(i) for i in query.filter(or_(*args)).limit(10).all()]
 
     return ret
     
