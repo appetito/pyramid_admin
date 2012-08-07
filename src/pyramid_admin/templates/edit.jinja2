@@ -1,6 +1,6 @@
 {% extends "pyramid_admin:templates/base.jinja2" %}
 
-{% block extra_js %}
+{% block head_extra %}
     {{ super() }}
 
     <link href="{{ request.static_url('pyramid_admin:assets/css/chosen.css') }}" rel="stylesheet">
