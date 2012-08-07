@@ -62,6 +62,7 @@ class AdminView(object):
     
     not_allowed = []
     form_class = None
+    menu_group = ''
 
     def __init__(self, site, context, request):
         self.site = site

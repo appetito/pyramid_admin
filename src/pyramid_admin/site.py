@@ -75,6 +75,15 @@ class AdminSite(object):
             fn = partial(fn, _query=q)
         return fn()
 
+    def menu_iter(self):
+        viewlist = self.get_views()
+        groups = {}
+        for n, v in viewlist:
+            if v.menu_group not in groups:
+                groups[v.menu_group] = []
+            groups[v.menu_group].append((n,v))
+        return sorted(groups.items(), key=lambda g: g[0])
+
 
         
 

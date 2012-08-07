@@ -42,41 +42,26 @@
             <span class="icon-bar"></span>
           </a>
           <a class="brand" href="{{ request.site.url() }}">{{ request.site.title }}</a>
-          <!--
-          <div class="btn-group pull-right">
-            <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
-              <i class="icon-user"></i> Username
-              <span class="caret"></span>
-            </a>
-            <ul class="dropdown-menu">
-              <li><a href="#">Profile</a></li>
-              <li class="divider"></li>
-              <li><a href="#">Sign Out</a></li>
-            </ul>
-          </div>
-          <div class="nav-collapse">
-            <ul class="nav">
-              <li class="active"><a href="#">Home</a></li>
-              <li><a href="#about">About</a></li>
-              <li><a href="#contact">Contact</a></li>
-            </ul>
-          </div>
-          -->
         </div>
       </div>
     </div>
 
     <div class="container-fluid">
-      <div class="row-fluid">
+      <div class="row">
         <div class="span3">
           <div class="well sidebar-nav">
             <ul class="nav nav-list">
-              <li class="nav-header">Models</li>
-              {% for name, view_class in request.site.get_views() %}
-                <li {% if request.view.__class__ == view_class %} class="active"{% endif %}>
-                  <a href="{{ request.site.url(name=name) }}">{{ view_class.title }}</a>
-                </li>
+              {% for group, views in request.site.menu_iter() %}
+              {% if group %}
+                <li class="nav-header">{{ group }}</li>
+              {% endif %}
+                {% for name, view_class in views %}
+                  <li {% if request.view.__class__ == view_class %} class="active"{% endif %}>
+                    <a href="{{ request.site.url(name=name) }}">{{ view_class.title }}</a>
+                  </li>
+                {% endfor %}
               {% endfor %}
+              
             </ul>
             {% block sidebar_extra %}
 

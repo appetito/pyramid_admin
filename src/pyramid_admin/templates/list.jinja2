@@ -62,7 +62,7 @@
             <table class="table table-bordered">
                 <thead>
                     <tr>
-                        <th><input type="checkbox" id="select_all"/></th>
+                        <th class="span1"><input type="checkbox" id="select_all"/></th>
                         {% for f in request.view.field_list %}
                             <th>{{ request.view.table_title(f) }}</th>
                         {% endfor %}
