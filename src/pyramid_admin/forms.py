@@ -8,10 +8,9 @@ from wtforms import DateField
 from wtforms import IntegerField as StupidIntegerField
 from wtforms import validators
 from wtforms import ValidationError
+from wtforms.ext.sqlalchemy.orm import model_fields
 from wtforms.widgets import TextInput
 from wtforms.widgets import HTMLString
-
-from intranet.auth import authenticate
 
 
 class SuggestInput(TextInput):
@@ -78,3 +77,34 @@ class SuggestField(Field):
             if obj:
                 return (self.data, getattr(obj, self.display_field))
         return ('','')
+
+
+def model_form(model, base_class=Form, only=None, exclude=None, field_args=None, converter=None, fields_override=None):
+    """
+    Create a wtforms Form for a given SQLAlchemy model class::
+
+        from wtforms.ext.sqlalchemy.orm import model_form
+        from myapp.models import User
+        UserForm = model_form(User)
+
+    :param model:
+        A SQLAlchemy mapped model class.
+    :param base_class:
+        Base form class to extend from. Must be a ``wtforms.Form`` subclass.
+    :param only:
+        An optional iterable with the property names that should be included in
+        the form. Only these properties will have fields.
+    :param exclude:
+        An optional iterable with the property names that should be excluded
+        from the form. All other properties will have fields.
+    :param field_args:
+        An optional dictionary of field names mapping to keyword arguments used
+        to construct each field object.
+    :param converter:
+        A converter to generate the fields based on the model properties. If
+        not set, ``ModelConverter`` is used.
+    """
+    field_dict = model_fields(model, only, exclude, field_args, converter)
+    if fields_override:
+        field_dict.update(fields_override)
+    return type(model.__name__ + 'Form', (base_class, ), field_dict)

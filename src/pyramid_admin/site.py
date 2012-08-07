@@ -36,10 +36,7 @@ class AdminSite(object):
             result = admin_view()
             if isinstance(result, tuple):
                 result = render_to_response(*result, request=self.request)
-            try:
-                self.session.commit()
-            except AssertionError:
-                pass
+        
             return result
 
         else:

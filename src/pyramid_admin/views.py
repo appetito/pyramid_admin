@@ -9,10 +9,13 @@ from sqlalchemy import orm, or_, types
 from pyramid.httpexceptions import HTTPFound, HTTPNotFound
 from pyramid.renderers import render_to_response
 from pyramid.response import Response, IResponse
+from pyramid.config.views import ViewDeriver
 from jinja2 import Markup
 from webhelpers import util, paginate
 from webhelpers.html import HTML
 
+
+from pyramid_admin.forms import model_form
 from pyramid_admin.interfaces import IColumnRenderer, ISqlaSessionFactory
 from pyramid_admin.utils import get_pk_column, get_pk_value
 
@@ -26,6 +29,7 @@ def action(name=None, **kw):
         return fn
     return _wrapper
 
+
 class AdminViewMeta(type):
 
     def __new__(cls, name, bases, dct):
@@ -34,8 +38,11 @@ class AdminViewMeta(type):
         for name in dir(ncl):
             val = getattr(ncl, name, None)
             if callable(val) and hasattr(val, '__action_params__'):
-                ncl.__actions__[val.__action_params__["name"]] = val
+                name = val.__action_params__["name"]
+                val.__action_params__.update(ncl.override.get(name, {}))
+                ncl.__actions__[name] = val
         return ncl
+
 
 class AdminView(object):
     """Basic admin class-based view"""
@@ -46,15 +53,22 @@ class AdminView(object):
     list_links = ['id']
     filters = []
     items_per_page = 20
-    override = []
+    override = {}
+
+    form_only = None
+    form_exclude = None
+    form_field_args = None
+    form_fields = None
     
     not_allowed = []
+    form_class = None
 
     def __init__(self, site, context, request):
         self.site = site
         self.context = context
         self.request = request
         self.request.view = self
+        self.session = site.session
         self.parts = request.matchdict
         self.list_order = {'field': self.request.GET.get('order'), 'desc': self.request.GET.get('desc')}
         for i, f in enumerate(self.filters):
@@ -63,11 +77,18 @@ class AdminView(object):
 
     def __call__(self):
         action_name = self.parts.get("action", "list")
+
         if action_name in self.not_allowed:
             raise HTTPNotFound
         action = self.__actions__.get(action_name, None)
+
         if action is None or not callable(action):
             raise HTTPNotFound
+
+        if "request_method" in action.__action_params__ and \
+                self.request.method != action.__action_params__["request_method"]:
+            raise HTTPNotFound
+
         result = action(self)
         registry = self.request.registry
         response = registry.queryAdapterOrSelf(result, IResponse)
@@ -76,9 +97,6 @@ class AdminView(object):
         self.process_response(result)
         renderer = action.__action_params__['renderer']
         return renderer, result
-
-    def process_response(self, data):
-        pass
 
     @property
     def title(self):
@@ -89,13 +107,13 @@ class AdminView(object):
 
     def get_obj(self):
         pk_column = get_pk_column(self.model)
-        obj = self.site.session.query(self.model).get(self.parts['obj_id'])
+        obj = self.session.query(self.model).get(self.parts['obj_id'])
         if not obj:
             raise HTTPNotFound
         return obj
 
     def get_list_query(self):
-        q = self.site.session.query(self.model)
+        q = self.session.query(self.model)
         order = self.list_order['field']
         desc = self.list_order['desc']
         if desc and order:
@@ -142,8 +160,10 @@ class AdminView(object):
             form = self.get_form(formdata=self.request.POST)
             if form.validate():
                 form.populate_obj(obj)
-                self.site.session.add(obj)
-                self.site.session.flush()
+                self.pre_update(obj)
+                self.session.add(obj)
+                self.session.flush()
+                self.commit()
                 return HTTPFound(self.url())
         else:
             form = self.get_form(obj)
@@ -157,15 +177,18 @@ class AdminView(object):
             if form.validate():
                 obj = self.model()
                 form.populate_obj(obj)
-                self.site.session.add(obj)
-                self.site.session.flush()
+                self.pre_create(obj)
+                self.session.add(obj)
+                self.session.flush()
+                self.commit()
                 return HTTPFound(self.url())
         return {'obj':None, 'obj_form': form}
 
     @action(request_method="POST")
     def delete(self):
         obj = self.get_obj()
-        self.site.session.delete(obj)
+        self._delete_obj(obj)
+        self.commit()
         return HTTPFound(self.url())
 
     @action(request_method="POST", renderer="pyramid_admin:templates/confirm_delete.jinja2")
@@ -173,16 +196,48 @@ class AdminView(object):
         if not self.is_allowed('delete'):
             raise HTTPNotFound
         ids = self.request.POST.getall('select')
-        objects = self.site.session.query(self.model).filter(get_pk_column(self.model).in_(ids)).all()
+        objects = self.session.query(self.model).filter(get_pk_column(self.model).in_(ids)).all()
         if 'confirmed' not in self.request.POST:
             return {'bulk': True, "objects": objects}
         for obj in objects:
-            self.site.session.delete(obj)
+            self._delete_obj(obj)
         return HTTPFound(self.url())
 
+    def _delete_obj(self, obj):
+        self.pre_delete(obj)
+        self.session.delete(obj)
+        self.commit()
+
+    def commit(self):
+        try:
+            self.session.commit()
+        except AssertionError: # if pyramid_tm is used
+            pass
+
+    def process_response(self, data):
+        pass
+
+    def pre_create(self, obj):
+        """pre object creation hook"""
+        pass
+
+    def pre_update(self, obj):
+        """pre object update hook"""
+        pass
+
+    def pre_delete(self, obj):
+        """pre object deletion hook"""
+        pass
+
     def _build_form(self):
-        """ we must introspect model fields and build form"""
-        raise NotImplementedError
+        """build form for model class"""
+        exclude = self.form_exclude or []
+        exclude.append(get_pk_column(self.model).name)
+        return model_form(self.model,  
+                          only=self.form_only, 
+                          exclude=exclude, 
+                          field_args=self.form_field_args, 
+                          fields_override=self.form_fields)
 
     def pk(self, obj):
         return get_pk_value(obj)
@@ -191,7 +246,6 @@ class AdminView(object):
         return TableRow(obj, self, self.field_list, self.list_links)
             
     def table_title(self, field_name):
-        # import ipdb; ipdb.set_trace()
         if not isinstance(field_name, basestring) or field_name not in self.model.__table__.columns:
             if field_name == unicode:
                 return self.title
