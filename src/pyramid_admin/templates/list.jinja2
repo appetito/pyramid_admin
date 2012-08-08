@@ -38,14 +38,14 @@
             {% endif %}
        
             <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
-            Action
+            {{ _("Action") }}
             <span class="caret"></span>
           </a>
           <ul class="dropdown-menu">
             <!-- dropdown menu links -->
             {% for act, title in request.view.bulk_actions %}
                 <li>
-                    <a class="bulk-action" href="{{ request.view.url(action=act) }}">{{ title}}</a>
+                    <a class="bulk-action" href="{{ request.view.url(action=act) }}">{{ title }}</a>
                 </li>
             {% endfor %}
             {% if request.view.is_allowed('delete') %}
@@ -117,13 +117,13 @@
     <div>
         <form action="">
             <ul class="nav nav-list">
-              <li class="nav-header">Filters</li>
+              <li class="nav-header">{{ _("Filters") }}</li>
                 {% for f in request.view.filters %}
                     <li><h4>{{ f.title }}</h4></li>
                     <li>{{ f.display() }}</li>
                 {% endfor %}
-            <input type="submit" class="btn" value="Apply"/>
-            <a href="{{ request.view.url() }}" class="btn">Reset</a>
+            <input type="submit" class="btn" value="{{ _('Apply') }}"/>
+            <a href="{{ request.view.url() }}" class="btn">{{ _("Reset") }}</a>
         </form>
     </div>
     {% endif %}
