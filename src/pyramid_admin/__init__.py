@@ -48,6 +48,8 @@ def includeme(config):
     config.add_directive('add_admin_view', add_admin_view)
     config.add_directive('add_admin_site', add_admin_site)
     config.add_static_view(name='_admin_assets', path="pyramid_admin:assets")
+
     env = config.get_jinja2_environment()
     env.filters.update({'errors': wtf_errors})
+    
     register_adapters(config.registry)

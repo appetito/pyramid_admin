@@ -34,7 +34,7 @@
 
         <div class="btn-group span4">
             {% if request.view.is_allowed('new') %}
-                <a class="btn btn-primary" href="{{ request.view.url(action="new") }}">Добавить</a> 
+                <a class="btn btn-primary" href="{{ request.view.url(action="new") }}">{{ _("Add") }}</a> 
             {% endif %}
        
             <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
@@ -49,7 +49,7 @@
                 </li>
             {% endfor %}
             {% if request.view.is_allowed('delete') %}
-                <li><a class="bulk-action" href="{{ request.view.url(action='bulk_delete') }}">Delete selected</a></li>
+                <li><a class="bulk-action" href="{{ request.view.url(action='bulk_delete') }}">{{ _("Delete selected") }}</a></li>
             {% endif %}
           </ul>
         </div>

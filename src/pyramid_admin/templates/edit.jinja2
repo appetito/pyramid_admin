@@ -9,7 +9,7 @@
     <script type="text/javascript">
         $(document).ready(function(){
             $('.b-delete-button').click(function(){
-                if(confirm("Вы действительно хотите удалить этот объект?")){
+                if(confirm("Are you sure you want to delete this item?")){
                     $.post($(this).attr('data-url'), {}, function(){
                         window.location.href="{{ request.view.url() }}";
                     });
