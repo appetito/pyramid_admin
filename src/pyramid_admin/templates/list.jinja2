@@ -63,8 +63,8 @@
                 <thead>
                     <tr>
                         <th class="span1"><input type="checkbox" id="select_all"/></th>
-                        {% for f in request.view.field_list %}
-                            <th>{{ request.view.table_title(f) }}</th>
+                        {% for coll in request.view.columns() %}
+                            <th>{{ coll.title() }}</th>
                         {% endfor %}
                     </tr>
                 </thead>
@@ -72,8 +72,8 @@
                     {% for obj in page.items %}
                         <tr>
                             <th><input type="checkbox" name="select" value="{{ request.view.pk(obj) }}"/></th>
-                            {% for f in request.view.fields(obj) %}
-                                <td>{{ f[1] }}</td>
+                            {% for coll in request.view.columns() %}
+                                <td>{{ coll(obj) }}</td>
                             {% endfor %}
                         </tr>
                     {% endfor %}

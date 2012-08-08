@@ -1,6 +1,6 @@
 # views.py
 
-from functools import partial
+from functools import partial, wraps
 import urllib
 import datetime
 
@@ -30,6 +30,18 @@ def action(name=None, **kw):
     return _wrapper
 
 
+def column(label):
+    """table column decorator"""
+    def _wrap(fn):
+        @wraps(fn)
+        def _wrapper(self, obj):
+            res = fn(self, obj)
+            return Markup(res)
+        _wrapper.__label__ = label
+        return _wrapper
+    return _wrap
+
+
 class AdminViewMeta(type):
 
     def __new__(cls, name, bases, dct):
@@ -49,7 +61,7 @@ class AdminView(object):
 
     __metaclass__ = AdminViewMeta
 
-    field_list = ['id', unicode]
+    field_list = ['id', 'repr']
     list_links = ['id']
     filters = []
     items_per_page = 20
@@ -243,52 +255,67 @@ class AdminView(object):
     def pk(self, obj):
         return get_pk_value(obj)
 
-    def fields(self, obj):
-        return TableRow(obj, self, self.field_list, self.list_links)
-            
-    def table_title(self, field_name):
-        if not isinstance(field_name, basestring) or field_name not in self.model.__table__.columns:
-            if field_name == unicode:
-                return self.title
-            return field_name
-        url = self.request.path_qs
+    def columns(self):
+        for f in self.field_list:
+            if isinstance(f, basestring) and hasattr(self.model, f):
+                yield Column(self, f)
+            elif isinstance(f, basestring) and hasattr(self, f):
+                yield MethodColumn(self, f)
+            else:
+                raise AttributeError("Invalid column name '%s'" % f)
+
+    @column("")
+    def repr(self, obj):
+        return unicode(obj)
+
+    
+class Column(object):
+
+    def __init__(self, view, name):
+        self.view = view
+        self.label = name
+        self.name = name
+
+    def title(self):
+        field_name = self.name
+        url = self.view.request.path_qs
         url = util.update_params(url, order=field_name, desc=None)
         order_ico = ''
-        if field_name == self.list_order['field'] and not self.list_order['desc']:
+        if field_name == self.view.list_order['field'] and not self.view.list_order['desc']:
             order_ico = '<i class="icon-chevron-down"/>'
             url = util.update_params(url, order=field_name, desc=1)
-        elif field_name == self.list_order['field'] and self.list_order['desc']:
+        elif field_name == self.view.list_order['field'] and self.view.list_order['desc']:
             order_ico = '<i class="icon-chevron-up"/>'
             url = util.update_params(url, order=None, desc=None)
         return Markup('<a href="%s">%s</a> %s' % (url, field_name, order_ico))
 
+    def get_val(self, obj):
+        renderer = self.view.request.registry.queryAdapter(get_type(obj, self.name), IColumnRenderer)
+        return renderer(getattr(obj, self.name))
 
-class TableRow(object):
+    def _link(self, obj, value):
+        return '<a href="%s">%s</a>' % (self.view.url(action="edit", obj=obj), value)
 
-    def __init__(self, obj, view, field_list, list_links):
-        self.obj = obj
+    def __call__(self, obj):
+        val = self.get_val(obj)
+        if self.name in self.view.list_links:
+            val = self._link(obj, val)
+        return Markup(val)
+
+
+class MethodColumn(Column):
+
+    def __init__(self, view, name):
         self.view = view
-        self.field_list = field_list
-        self.list_links = list_links
+        self.name = name
+        self.fn = getattr(self.view, name)
+        self.label = self.fn.__label__
 
-    def __iter__(self):
-        for f in self.field_list:
-            if isinstance(f, basestring) and hasattr(self.obj, f):
-                renderer = self.view.request.registry.queryAdapter(get_type(self.obj, f), IColumnRenderer)
-                val = renderer(getattr(self.obj, f))
-                label = f
-            elif isinstance(f, basestring) and hasattr(self.view, 'column_' + f):
-                val = getattr(self.view, 'column_' + f)(self.obj)
-                label = f
-            elif callable(f):
-                val = f(self.obj)
-                label = getattr(f, '__label__', f.__name__)
-            if f in self.list_links:
-                val = self._wrap_link_field(self.obj, val)
-            yield (f, val)
+    def title(self):
+        return self.label
 
-    def _wrap_link_field(self, obj, value):
-        return Markup('<a href="%s">%s</a>' % (self.view.url(action="edit", obj=obj), value))
+    def get_val(self, obj):
+        return self.fn(obj)
 
 
 def get_type(obj, fieldname):
