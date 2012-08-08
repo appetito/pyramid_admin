@@ -1,6 +1,8 @@
 import inspect
 from jinja2 import Markup
 from zope.interface import Interface
+from pyramid.i18n import get_localizer, TranslationStringFactory
+from pyramid.threadlocal import get_current_request
 
 from pyramid_admin.site import AdminSite, IAdminView, ISqlaSessionFactory, IAdminAuthzPolicy
 from pyramid_admin.views import register_adapters, suggest_view
@@ -49,7 +51,23 @@ def includeme(config):
     config.add_directive('add_admin_site', add_admin_site)
     config.add_static_view(name='_admin_assets', path="pyramid_admin:assets")
 
+    config.add_jinja2_extension('jinja2.ext.i18n')
+    config.add_translation_dirs('pyramid_admin:locale')
+
     env = config.get_jinja2_environment()
     env.filters.update({'errors': wtf_errors})
-    
+    env.install_gettext_callables(gettext, ngettext)
     register_adapters(config.registry)
+
+tsf = TranslationStringFactory('pyramid_admin')
+
+def gettext(msg):
+    req = get_current_request()
+    localizer = get_localizer(req)
+    ts = tsf(msg)
+    return localizer.translate(ts)
+
+def ngettext(singular, plural, n):
+    req = get_current_request()
+    localizer = get_localizer(req)
+    return localizer.pluralize(singular, plural, n, domain='pyramid_admin')
