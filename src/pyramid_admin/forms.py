@@ -58,7 +58,7 @@ class SuggestField(Field):
 
     widget = SuggestInput()
 
-    def __init__(self, model_class, display_field, search_fields, ac_label, label='', validators=None, **kwargs):
+    def __init__(self, label, model_class, display_field, search_fields, ac_label, validators=None, **kwargs):
         super(SuggestField, self).__init__(label, validators, **kwargs)
         self.model_class = model_class
         self.search_fields = search_fields

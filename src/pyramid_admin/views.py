@@ -9,7 +9,7 @@ from sqlalchemy import orm, or_, types
 from pyramid.httpexceptions import HTTPFound, HTTPNotFound
 from pyramid.renderers import render_to_response
 from pyramid.response import Response, IResponse
-from pyramid.config.views import ViewDeriver
+from pyramid.decorator import reify
 from jinja2 import Markup
 from webhelpers import util, paginate
 from webhelpers.html import HTML
@@ -255,14 +255,23 @@ class AdminView(object):
     def pk(self, obj):
         return get_pk_value(obj)
 
+    @reify
     def columns(self):
+        colls = []
+        form = self.get_form()
         for f in self.field_list:
-            if isinstance(f, basestring) and hasattr(self.model, f):
-                yield Column(self, f)
-            elif isinstance(f, basestring) and hasattr(self, f):
-                yield MethodColumn(self, f)
-            else:
-                raise AttributeError("Invalid column name '%s'" % f)
+            if isinstance(f, basestring):
+                if ':' in f:
+                    name, label = f.split(':', 1)
+                else: 
+                    name, label = f, None 
+                if hasattr(self.model, name):
+                    if name in form and label is None:
+                        label = form[name].label.text
+                    colls.append(Column(self, name, label))
+                elif hasattr(self, f):
+                    colls.append(MethodColumn(self, f))
+        return colls
 
     @column("")
     def repr(self, obj):
@@ -271,9 +280,9 @@ class AdminView(object):
     
 class Column(object):
 
-    def __init__(self, view, name):
+    def __init__(self, view, name, label=None):
         self.view = view
-        self.label = name
+        self.label = label or name
         self.name = name
 
     def title(self):
@@ -287,7 +296,7 @@ class Column(object):
         elif field_name == self.view.list_order['field'] and self.view.list_order['desc']:
             order_ico = '<i class="icon-chevron-up"/>'
             url = util.update_params(url, order=None, desc=None)
-        return Markup('<a href="%s">%s</a> %s' % (url, field_name, order_ico))
+        return Markup('<a href="%s">%s</a> %s' % (url, self.label, order_ico))
 
     def get_val(self, obj):
         renderer = self.view.request.registry.queryAdapter(get_type(obj, self.name), IColumnRenderer)

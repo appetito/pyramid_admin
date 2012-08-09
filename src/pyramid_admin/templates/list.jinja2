@@ -59,11 +59,11 @@
 
     {% block list %}
         <p>items {{ page.first_item or 0 }} - {{ page.last_item or 0 }} of {{ page.item_count or 0 }}</p>
-            <table class="table table-bordered">
+            <table class="list table table-bordered">
                 <thead>
                     <tr>
                         <th class="span1"><input type="checkbox" id="select_all"/></th>
-                        {% for coll in request.view.columns() %}
+                        {% for coll in request.view.columns %}
                             <th>{{ coll.title() }}</th>
                         {% endfor %}
                     </tr>
@@ -72,7 +72,7 @@
                     {% for obj in page.items %}
                         <tr>
                             <th><input type="checkbox" name="select" value="{{ request.view.pk(obj) }}"/></th>
-                            {% for coll in request.view.columns() %}
+                            {% for coll in request.view.columns %}
                                 <td>{{ coll(obj) }}</td>
                             {% endfor %}
                         </tr>

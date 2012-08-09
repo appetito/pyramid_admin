@@ -1,0 +1,4 @@
+table.list th a{
+    display: inline-block;
+    *display: inline;
+}
