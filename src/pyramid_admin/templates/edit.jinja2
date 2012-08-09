@@ -25,24 +25,27 @@
 
 {% block content %}
 
-
-
     {% block functions %}
     {% endblock %}
 
     {% block form %}
-        <form id="edit_form" class="form-horizontal" action="" method="post">
+        <form id="edit_form" class="form-horizontal" action="" method="post" enctype="multipart/form-data">
             <fieldset>
-            {% for field in obj_form %}
-                <div class="control-group {% if field.errors %}error{% endif %}">
-                    <label class="control-label">{{ field.label.text }} {% if field.flags.required %}*{% endif %}</label>
-                    <div class="controls">
-                        {{ field }}{{ field|errors }}
+            {% block form_fields %}
+                {% for field in obj_form %}
+                    <div class="control-group {% if field.errors %}error{% endif %}">
+                        <label class="control-label">{{ field.label.text }} {% if field.flags.required %}*{% endif %}</label>
+                        <div class="controls">
+                            {{ field }}{{ field|errors }}
+                        </div>
                     </div>
-                </div>
-            {% endfor %}
-                <div class="control-group">
-                    <div class="controls">
+                {% endfor %}
+            {% endblock %}
+            {% block form_fields_extra %}
+            {% endblock %}
+            <div class="control-group">
+                <div class="controls">
+                    {% block form_buttons %}
                         <input class="btn btn-primary" type="submit" value="{{ _('Save') }}">
                         <a class="btn" href="{{ request.view.url() }}">{{ _("Cancel") }}</a>
                         {% if obj and request.view.is_allowed('delete') %}
@@ -52,11 +55,11 @@
                              {{ _("Delete") }}
                             </a>
                         {% endif %}
-                    </div>
+                    {% endblock %}
                 </div>
-                </fieldset>
+            </div>
+            </fieldset>
         </form>
-     
     {% endblock %}
 
 {% endblock %}
