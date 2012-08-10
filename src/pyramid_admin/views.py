@@ -173,7 +173,7 @@ class AdminView(object):
             form = self.get_form(formdata=self.request.POST)
             if form.validate():
                 form.populate_obj(obj)
-                self.pre_update(obj)
+                self.before_update(obj)
                 self.session.add(obj)
                 self.session.flush()
                 self.commit()
@@ -190,7 +190,7 @@ class AdminView(object):
             if form.validate():
                 obj = self.model()
                 form.populate_obj(obj)
-                self.pre_create(obj)
+                self.before_insert(obj)
                 self.session.add(obj)
                 self.session.flush()
                 self.commit()
@@ -217,7 +217,7 @@ class AdminView(object):
         return HTTPFound(self.url())
 
     def _delete_obj(self, obj):
-        self.pre_delete(obj)
+        self.before_delete(obj)
         self.session.delete(obj)
         self.commit()
 
@@ -230,15 +230,15 @@ class AdminView(object):
     def process_response(self, data):
         pass
 
-    def pre_create(self, obj):
+    def before_create(self, obj):
         """pre object creation hook"""
         pass
 
-    def pre_update(self, obj):
+    def before_update(self, obj):
         """pre object update hook"""
         pass
 
-    def pre_delete(self, obj):
+    def before_delete(self, obj):
         """pre object deletion hook"""
         pass
 
