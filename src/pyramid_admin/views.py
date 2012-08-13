@@ -16,7 +16,8 @@ from webhelpers.html import HTML
 
 
 from pyramid_admin.forms import model_form
-from pyramid_admin.interfaces import IColumnRenderer, ISqlaSessionFactory
+from pyramid_admin.filters import LikeFilter, QuickBoolFilter, QueryFilter
+from pyramid_admin.interfaces import IColumnRenderer, ISqlaSessionFactory, IQueryFilter
 from pyramid_admin.utils import get_pk_column, get_pk_value
 
 
@@ -84,13 +85,26 @@ class AdminView(object):
         self.session = site.session
         self.parts = request.matchdict
         self.list_order = {'field': self.request.GET.get('order'), 'desc': self.request.GET.get('desc')}
+
         for i, f in enumerate(self.filters):
-            f.id = 'f%s' % i
-            f.activate(self.request)
+            if isinstance(f, basestring) and hasattr(self.model, f):
+                typ = get_type(self.model, f)
+                filter_class = self.request.registry.queryAdapter(typ, IQueryFilter)
+                if not filter_class:
+                    continue
+                filter_inst = filter_class(f)
+                self.filters.pop(i)
+                self.filters.insert(i, filter_inst)
+            elif isinstance(f, QueryFilter):    
+                filter_inst = f
+            else:
+                raise TypeError("Invalid Filter type ''. \
+                    Must by a name of model field or Subclass of pyramid_admin.filters.QueryFilter" % type(f))
+            fid = 'f%s' % i
+            filter_inst.activate(self.request, fid)
 
     def __call__(self):
         action_name = self.parts.get("action", "list")
-
         if action_name in self.not_allowed:
             raise HTTPNotFound
         action = self.__actions__.get(action_name, None)
@@ -230,7 +244,7 @@ class AdminView(object):
     def process_response(self, data):
         pass
 
-    def before_create(self, obj):
+    def before_insert(self, obj):
         """pre object creation hook"""
         pass
 
@@ -348,6 +362,11 @@ class BoolRenderer(object):
     def __call__(self, val, editable=False):
         return Markup('<i class="%s"></i>' % ('icon-ok' if val else 'icon-remove'))
 
+def like_filter_factory(typ):
+    return LikeFilter
+
+def bool_filter_factory(typ):
+    return QuickBoolFilter
 
 def register_adapters(reg):
     from sqlalchemy.types import Integer
@@ -359,6 +378,8 @@ def register_adapters(reg):
     reg.registerAdapter(StringRenderer, (Integer,), IColumnRenderer)
     reg.registerAdapter(StringRenderer, (String,), IColumnRenderer)
     reg.registerAdapter(BoolRenderer, (Boolean,), IColumnRenderer)
+    reg.registerAdapter(like_filter_factory, (String,), IQueryFilter)
+    reg.registerAdapter(bool_filter_factory, (Boolean,), IQueryFilter)
 
 
 def to_dict(obj):

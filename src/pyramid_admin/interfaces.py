@@ -12,3 +12,6 @@ class IAdminAuthzPolicy(Interface):
 
 class IColumnRenderer(Interface):
     """ Table column renderer """
+
+class IQueryFilter(Interface):
+    """ Query filter """
