@@ -18,23 +18,23 @@ class SuggestInput(TextInput):
     SCRIPT = """
         <script type="text/javascript">
             $(function(){
-                $('#%s__ac').autocomplete({
+                $('#%(field_name)s__ac').autocomplete({
                     'minLength': 2,
                     'delay': 200,
                     source: function(request, response) {
-                        %s
-                        request['type'] = '%s';
-                        $.getJSON("/_model_suggest", request, function(data, status, xhr) {
+                        %(terms)s
+                        request['type'] = '%(type)s';
+                        $.getJSON("/suggest/", request, function(data, status, xhr) {
                             response($.map(data, function(item){
-                                return {label: item['%s'],
-                                        value: item['%s'],
+                                return {label: item['%(ac_label)s'],
+                                        value: item['%(ac_label)s'],
                                         id: item.id
                                 }
                             }))
                         })
                     },
                     select: function(event, ui) {
-                        $('#%s').val(ui.item.id);
+                        $('#%(name)s').val(ui.item.id);
                     },
                 });
             });
@@ -47,10 +47,16 @@ class SuggestInput(TextInput):
         if 'value' not in kwargs:
              kwargs['value'], val = field._value()
         hidden = '<input %s/>' % self.html_params(name=field.name, **kwargs)
-        text = '<input %s/>' % self.html_params(name=field.name + '__ac', id=kwargs['id'] + '__ac', type="text", value=val, class_=kwargs.get('class_'))
+        text = '<input %s/>' % self.html_params(name=field.name + '__ac', id=kwargs['id'] + '__ac', 
+            type="text", value=val, class_=kwargs.get('class_'))
         terms = "\n".join(["request['%s'] = request['term'];" % fld for fld in field.search_fields])
-        script = self.SCRIPT % (field.name, terms, field.model_class.__name__.lower(), field.ac_label, field.ac_label, field.name)
-        return HTMLString(text + hidden + script)
+        script = self.SCRIPT % {
+                                    'name': field.name, 
+                                    'terms': terms, 
+                                    'type': field.model_class.__name__.lower(), 
+                                    'ac_label': field.ac_label
+                                }
+        return widgets.HTMLString(text + hidden + script)
 
 
 class SuggestField(Field):
