@@ -72,7 +72,14 @@
           {% endblock %}
         </div><!--/span-->
         <div class="span9 b-content">
-
+          {% block messages %}
+            {% for msg in request.session.pop_flash('success') %}
+              <div class="alert alert-success fade in">
+                <a class="close" data-dismiss="alert" href="#">&times;</a>
+                {{ msg|safe }}
+              </div>
+            {% endfor %}
+          {% endblock %}
           {% block content %}{% endblock %}
 
         </div><!--/span-->
@@ -97,6 +104,7 @@
     {% block bottom_js_extra %}{% endblock %}
     <script type="text/javascript">
       $(document).ready(function(){
+          $(".alert").alert();
           {% block jq_ready %}{% endblock %}
       });
     </script>

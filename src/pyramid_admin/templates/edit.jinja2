@@ -10,9 +10,9 @@
         $(document).ready(function(){
             $('.b-delete-button').click(function(){
                 if(confirm( '{{ _("Are you sure you want to delete this item?") }}')){
-                    $.post($(this).attr('data-url'), {}, function(){
-                        window.location.href="{{ request.view.url() }}";
-                    });
+                    var form = $(this).closest('form');
+                    form.attr('action', $(this).attr('data-url'));
+                    form.submit();
                 };
                 return false;
             });

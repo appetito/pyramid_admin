@@ -214,6 +214,7 @@ class AdminView(object):
                 self.session.add(obj)
                 self.session.flush()
                 self.commit()
+                self.request.session.flash(_('Object <strong>"%s"</strong> successfully updated.' % self.repr(obj)) , 'success')
                 next = 'new' if 'another' in self.request.POST else None
                 return HTTPFound(self.url(action=next))
         else:
@@ -232,6 +233,7 @@ class AdminView(object):
                 self.session.add(obj)
                 self.session.flush()
                 self.commit()
+                self.request.session.flash(_('New object <strong>"%s"</strong> successfully created.' % self.repr(obj)) , 'success')
                 next = 'new' if 'another' in self.request.POST else None
                 return HTTPFound(self.url(action=next))
         return {'obj':None, 'obj_form': form}
@@ -240,7 +242,6 @@ class AdminView(object):
     def delete(self):
         obj = self.get_obj()
         self._delete_obj(obj)
-        self.commit()
         return HTTPFound(self.url())
 
     @bulk_action(_("Delete selected"), request_method="POST", renderer="pyramid_admin:templates/confirm_delete.jinja2")
@@ -257,6 +258,7 @@ class AdminView(object):
     def _delete_obj(self, obj):
         self.before_delete(obj)
         self.session.delete(obj)
+        self.request.session.flash(_('Object <strong>"%s"</strong> successfully deleted.' % self.repr(obj)) , 'success')
         self.commit()
 
     def commit(self):
