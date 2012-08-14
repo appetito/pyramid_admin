@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pyramid_admin 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2012-08-14 15:20+0400\n"
+"POT-Creation-Date: 2012-08-14 17:38+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,8 +17,20 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 0.9.6\n"
 
-#: pyramid_admin/views.py:246
+#: pyramid_admin/views.py:220
+msgid "Object <strong>\"${obj}\"</strong> successfully updated."
+msgstr ""
+
+#: pyramid_admin/views.py:240
+msgid "New object <strong>\"${obj}\"</strong> successfully created."
+msgstr ""
+
+#: pyramid_admin/views.py:252
 msgid "Delete selected"
+msgstr ""
+
+#: pyramid_admin/views.py:266
+msgid "Object <strong>\"${obj}\"</strong> successfully deleted."
 msgstr ""
 
 #: pyramid_admin/templates/confirm_delete.jinja2:5

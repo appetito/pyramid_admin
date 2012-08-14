@@ -10,6 +10,7 @@ from pyramid.httpexceptions import HTTPFound, HTTPNotFound
 from pyramid.renderers import render_to_response
 from pyramid.response import Response, IResponse
 from pyramid.decorator import reify
+from pyramid.i18n import TranslationStringFactory, get_localizer
 from jinja2 import Markup
 from webhelpers import util, paginate
 from webhelpers.html import HTML
@@ -20,7 +21,8 @@ from pyramid_admin.filters import LikeFilter, QuickBoolFilter, QueryFilter
 from pyramid_admin.interfaces import IColumnRenderer, ISqlaSessionFactory, IQueryFilter
 from pyramid_admin.utils import get_pk_column, get_pk_value
 
-_ = lambda s: s
+
+_ = TranslationStringFactory('pyramid_admin')
 
 def action(name=None, **kw):
     """action decorator"""
@@ -102,6 +104,7 @@ class AdminView(object):
         self.request.view = self
         self.session = site.session
         self.parts = request.matchdict
+        self.localizer = get_localizer(request)
         self.list_order = {'field': self.request.GET.get('order'), 'desc': self.request.GET.get('desc')}
         for i, f in enumerate(self.filters):
             if isinstance(f, basestring) and hasattr(self.model, f):
@@ -214,7 +217,8 @@ class AdminView(object):
                 self.session.add(obj)
                 self.session.flush()
                 self.commit()
-                self.request.session.flash(_('Object <strong>"%s"</strong> successfully updated.' % self.repr(obj)) , 'success')
+                msg = _('Object <strong>"${obj}"</strong> successfully updated.', mapping={'obj':self.repr(obj)})
+                self.message(msg)
                 next = 'new' if 'another' in self.request.POST else None
                 return HTTPFound(self.url(action=next))
         else:
@@ -233,7 +237,8 @@ class AdminView(object):
                 self.session.add(obj)
                 self.session.flush()
                 self.commit()
-                self.request.session.flash(_('New object <strong>"%s"</strong> successfully created.' % self.repr(obj)) , 'success')
+                msg = _('New object <strong>"${obj}"</strong> successfully created.', mapping={'obj':self.repr(obj)})
+                self.message(msg)
                 next = 'new' if 'another' in self.request.POST else None
                 return HTTPFound(self.url(action=next))
         return {'obj':None, 'obj_form': form}
@@ -258,7 +263,8 @@ class AdminView(object):
     def _delete_obj(self, obj):
         self.before_delete(obj)
         self.session.delete(obj)
-        self.request.session.flash(_('Object <strong>"%s"</strong> successfully deleted.' % self.repr(obj)) , 'success')
+        msg = _('Object <strong>"${obj}"</strong> successfully deleted.', mapping={'obj':self.repr(obj)})
+        self.message(msg)
         self.commit()
 
     def commit(self):
@@ -291,6 +297,9 @@ class AdminView(object):
                           exclude=exclude, 
                           field_args=self.form_field_args, 
                           fields_override=self.form_fields)
+
+    def message(self, msg, type='success'):
+        self.request.session.flash(self.localizer.translate(msg), type)
 
     def get_name_label(self, field_name):
         """
@@ -333,6 +342,7 @@ class AdminView(object):
     @column("")
     def repr(self, obj):
         return unicode(obj)
+
 
     
 class Column(object):
