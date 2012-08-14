@@ -62,8 +62,8 @@ class AdminView(object):
 
     __metaclass__ = AdminViewMeta
 
-    field_list = ['id', 'repr']
-    list_links = ['id']
+    field_list = ['pk', 'repr']
+    list_links = ['pk']
     filters = []
     items_per_page = 20
     override = {}
@@ -266,7 +266,11 @@ class AdminView(object):
                           field_args=self.form_field_args, 
                           fields_override=self.form_fields)
 
+    @column("#")
     def pk(self, obj):
+        """
+        value of object primary key
+        """
         return get_pk_value(obj)
 
     @reify

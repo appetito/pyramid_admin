@@ -18,7 +18,7 @@ class SuggestInput(TextInput):
     SCRIPT = """
         <script type="text/javascript">
             $(function(){
-                $('#%(field_name)s__ac').autocomplete({
+                $('#%(name)s__ac').autocomplete({
                     'minLength': 2,
                     'delay': 200,
                     source: function(request, response) {
@@ -56,7 +56,7 @@ class SuggestInput(TextInput):
                                     'type': field.model_class.__name__.lower(), 
                                     'ac_label': field.ac_label
                                 }
-        return widgets.HTMLString(text + hidden + script)
+        return HTMLString(text + hidden + script)
 
 
 class SuggestField(Field):
