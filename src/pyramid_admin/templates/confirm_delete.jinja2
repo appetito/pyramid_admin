@@ -2,19 +2,23 @@
 
 {% block content %}
 
-    <h1>{{ _("Confirm objects deletion") }}</h1>
+    <h1 class="page-header">{{ _("Confirm objects deletion") }}</h1>
 
-    <h3>{{ _("Object to delete:") }}</h3>
-    <form action="" method="post">
-        <input type="hidden" name="confirmed" value="yes"/>
-        {% for obj in objects %}
+    {% if objects %}
+    <h3>{{ _("Objects to delete:") }}</h3>
+        <form action="" method="post">
+            <input type="hidden" name="confirmed" value="yes"/>
+            {% for obj in objects %}
+                <div class="control-group">
+                    <input type="checkbox" name="select" value="{{ request.view.pk(obj) }}" checked="checked"/> {{ obj }}
+                </div>
+            {% endfor %}
             <div class="control-group">
-                <input type="checkbox" name="select" value="{{ request.view.pk(obj) }}" checked="checked"/> {{ obj }}
+                    <input class="btn btn-danger" type="submit" value="{{ _('Yes, delete choosen objects!') }}"/>
+                    <a class="btn btn-primary" href="{{ request.view.url() }}">{{ _("Cancel") }}</a>
             </div>
-        {% endfor %}
-        <div class="control-group">
-                <input class="btn btn-danger" type="submit" value="{{ _('Yes, delete choosen objects!') }}"/>
-                <a class="btn btn-primary" href="{{ request.view.url() }}">{{ _("Cancel") }}</a>
-        </div>
-    </form>
+        </form>
+    {% else %}
+        <p>{{ _("There are no objects selected for removal") }}</p>
+    {% endif %}
 {% endblock %}

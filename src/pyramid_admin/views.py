@@ -31,6 +31,18 @@ def action(name=None, **kw):
     return _wrapper
 
 
+def bulk_action(title, name=None, **kw):
+    """bulk action decorator"""
+    def _wrapper(fn):
+        kw['name'] = name or fn.__name__
+        kw['fn_name'] = fn.__name__
+        kw['bulk'] = True
+        fn.title = title
+        fn.__action_params__ = kw
+        return fn
+    return _wrapper
+
+
 def column(label):
     """table column decorator"""
     def _wrap(fn):
@@ -48,12 +60,17 @@ class AdminViewMeta(type):
     def __new__(cls, name, bases, dct):
         ncl = type.__new__(cls, name, bases, dct)
         ncl.__actions__ = {}
+        ncl.bulk_actions = []
         for name in dir(ncl):
             val = getattr(ncl, name, None)
             if callable(val) and hasattr(val, '__action_params__'):
                 name = val.__action_params__["name"]
+                if name in ncl.not_allowed:
+                    continue
                 val.__action_params__.update(ncl.override.get(name, {}))
                 ncl.__actions__[name] = val
+                if val.__action_params__.get("bulk"):
+                    ncl.bulk_actions.append((name, val.title))
         return ncl
 
 
@@ -139,6 +156,11 @@ class AdminView(object):
             raise HTTPNotFound
         return obj
 
+    def get_bulk_selected(self):
+        ids = self.request.POST.getall('select')
+        objects = self.session.query(self.model).filter(get_pk_column(self.model).in_(ids)).all()
+        return objects
+
     def get_list_query(self):
         q = self.session.query(self.model)
         order = self.list_order['field']
@@ -218,12 +240,11 @@ class AdminView(object):
         self.commit()
         return HTTPFound(self.url())
 
-    @action(request_method="POST", renderer="pyramid_admin:templates/confirm_delete.jinja2")
+    @bulk_action("Delete selected", request_method="POST", renderer="pyramid_admin:templates/confirm_delete.jinja2")
     def bulk_delete(self):
         if not self.is_allowed('delete'):
             raise HTTPNotFound
-        ids = self.request.POST.getall('select')
-        objects = self.session.query(self.model).filter(get_pk_column(self.model).in_(ids)).all()
+        objects = self.get_bulk_selected()
         if 'confirmed' not in self.request.POST:
             return {'bulk': True, "objects": objects}
         for obj in objects:
