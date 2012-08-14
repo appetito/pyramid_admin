@@ -213,7 +213,8 @@ class AdminView(object):
                 self.session.add(obj)
                 self.session.flush()
                 self.commit()
-                return HTTPFound(self.url())
+                next = 'new' if 'another' in self.request.POST else None
+                return HTTPFound(self.url(action=next))
         else:
             form = self.get_form(obj)
         return {'obj':obj, 'obj_form': form}
@@ -230,7 +231,8 @@ class AdminView(object):
                 self.session.add(obj)
                 self.session.flush()
                 self.commit()
-                return HTTPFound(self.url())
+                next = 'new' if 'another' in self.request.POST else None
+                return HTTPFound(self.url(action=next))
         return {'obj':None, 'obj_form': form}
 
     @action(request_method="POST")

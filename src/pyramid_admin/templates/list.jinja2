@@ -36,6 +36,7 @@
         <div class="btn-group pull-right">
         {% if request.view.bulk_actions and page.items %}
           <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+            <i class="icon-cog"></i>
             {{ _("Action") }}
             <span class="caret"></span>
           </a>
@@ -51,7 +52,9 @@
          {% endif %}
 
             {% if request.view.is_allowed('new') %}
-                <a class="btn btn-primary" href="{{ request.view.url(action="new") }}">{{ _("Add") }}</a> 
+                <a class="btn btn-primary" href="{{ request.view.url(action="new") }}">
+                    <i class="icon-plus icon-white"></i> {{ _("Add") }}
+                </a> 
             {% endif %}
         </div>
         
