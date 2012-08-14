@@ -20,6 +20,7 @@ from pyramid_admin.filters import LikeFilter, QuickBoolFilter, QueryFilter
 from pyramid_admin.interfaces import IColumnRenderer, ISqlaSessionFactory, IQueryFilter
 from pyramid_admin.utils import get_pk_column, get_pk_value
 
+_ = lambda s: s
 
 def action(name=None, **kw):
     """action decorator"""
@@ -102,14 +103,14 @@ class AdminView(object):
         self.session = site.session
         self.parts = request.matchdict
         self.list_order = {'field': self.request.GET.get('order'), 'desc': self.request.GET.get('desc')}
-
         for i, f in enumerate(self.filters):
             if isinstance(f, basestring) and hasattr(self.model, f):
                 typ = get_type(self.model, f)
                 filter_class = self.request.registry.queryAdapter(typ, IQueryFilter)
                 if not filter_class:
                     continue
-                filter_inst = filter_class(f)
+                name, label = self.get_name_label(f)
+                filter_inst = filter_class(name, label + ':')
                 self.filters.pop(i)
                 self.filters.insert(i, filter_inst)
             elif isinstance(f, QueryFilter):    
@@ -242,7 +243,7 @@ class AdminView(object):
         self.commit()
         return HTTPFound(self.url())
 
-    @bulk_action("Delete selected", request_method="POST", renderer="pyramid_admin:templates/confirm_delete.jinja2")
+    @bulk_action(_("Delete selected"), request_method="POST", renderer="pyramid_admin:templates/confirm_delete.jinja2")
     def bulk_delete(self):
         if not self.is_allowed('delete'):
             raise HTTPNotFound
@@ -289,30 +290,43 @@ class AdminView(object):
                           field_args=self.form_field_args, 
                           fields_override=self.form_fields)
 
+    def get_name_label(self, field_name):
+        """
+        """
+        form = self._blank_form
+        if ':' in field_name:
+            field_name, label = field_name.split(':', 1)
+        elif field_name in form:
+            label = form[field_name].label.text
+        else:
+            label = field_name.title().replace('_', ' ')
+        return field_name, label
+            
+    @reify
+    def _blank_form(self):
+        """
+        blank form instance
+        """
+        return self.get_form()        
+
+    @reify
+    def columns(self):
+        colls = []
+        for f in self.field_list:
+            if isinstance(f, basestring):
+                name, label = self.get_name_label(f)
+                if hasattr(self.model, name):
+                    colls.append(Column(self, name, label))
+                elif hasattr(self, name):
+                    colls.append(MethodColumn(self, name))
+        return colls
+
     @column("#")
     def pk(self, obj):
         """
         value of object primary key
         """
         return get_pk_value(obj)
-
-    @reify
-    def columns(self):
-        colls = []
-        form = self.get_form()
-        for f in self.field_list:
-            if isinstance(f, basestring):
-                if ':' in f:
-                    name, label = f.split(':', 1)
-                else: 
-                    name, label = f, None 
-                if hasattr(self.model, name):
-                    if name in form and label is None:
-                        label = form[name].label.text
-                    colls.append(Column(self, name, label))
-                elif hasattr(self, f):
-                    colls.append(MethodColumn(self, f))
-        return colls
 
     @column("")
     def repr(self, obj):

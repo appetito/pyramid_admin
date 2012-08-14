@@ -44,7 +44,7 @@ class LikeFilter(QueryFilter):
 
 class BoolFilter(QueryFilter):
 
-    def __init__(self, field_name, true="True", false="False", title=None):
+    def __init__(self, field_name, title=None, true="True", false="False"):
         self.field_name = field_name
         self.true = true
         self.false = false
