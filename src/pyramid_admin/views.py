@@ -74,6 +74,8 @@ class AdminViewMeta(type):
                 ncl.__actions__[name] = val
                 if val.__action_params__.get("bulk"):
                     ncl.bulk_actions.append((name, val.title))
+        if ncl.title is None and ncl.model:
+            ncl.title = ncl.model.__name__.title()
         return ncl
 
 
@@ -81,6 +83,10 @@ class AdminView(object):
     """Basic admin class-based view"""
 
     __metaclass__ = AdminViewMeta
+
+    title = None
+    model = None
+    form_class = None
 
     field_list = ['pk', 'repr']
     list_links = ['pk']
@@ -94,7 +100,8 @@ class AdminView(object):
     form_fields = None
     
     not_allowed = []
-    form_class = None
+    permission = None
+
     menu_group = ''
 
     def __init__(self, site, context, request):
@@ -145,10 +152,6 @@ class AdminView(object):
         self.process_response(result)
         renderer = action.__action_params__['renderer']
         return renderer, result
-
-    @property
-    def title(self):
-        return self.model.__name__ + " view" 
 
     def is_allowed(self, action):
         return action not in self.not_allowed

@@ -1,2 +1,2 @@
 include *.txt *.ini *.cfg *.rst *.md
-recursive-include pyramid_admin *.ico *.png *.css *.gif *.jpg *.pt *.txt *.mak *.mako *.js *.html *.xml *.jinja2
+recursive-include pyramid_admin *.ico *.png *.css *.gif *.jpg *.pt *.txt *.mak *.mako *.js *.html *.xml *.jinja2, *.pot, *.po, *.mo
