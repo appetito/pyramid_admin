@@ -9,7 +9,7 @@ CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 requires=['pyramid>=1.3', 'pyramid_jinja2', 'wtforms', 'webhelpers']
 
 setup(name='pyramid_admin',
-      version='0.4',
+      version='0.4.1',
       description='admin (CRUD) interface for pyramid framework',
       long_description=README + '\n\n' +  CHANGES,
       classifiers=[
