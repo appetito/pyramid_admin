@@ -114,12 +114,14 @@ class AdminView(object):
         self.localizer = get_localizer(request)
         self.list_order = {'field': self.request.GET.get('order'), 'desc': self.request.GET.get('desc')}
         for i, f in enumerate(self.filters):
-            if isinstance(f, basestring) and hasattr(self.model, f):
+            if isinstance(f, basestring):
+                name, label = self.get_name_label(f)
+                if not hasattr(self.model, name):
+                    continue
                 typ = get_type(self.model, f)
                 filter_class = self.request.registry.queryAdapter(typ, IQueryFilter)
                 if not filter_class:
                     continue
-                name, label = self.get_name_label(f)
                 filter_inst = filter_class(name, label + ':')
                 self.filters.pop(i)
                 self.filters.insert(i, filter_inst)

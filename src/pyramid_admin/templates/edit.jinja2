@@ -47,7 +47,11 @@
                 <div class="controls">
                     {% block form_buttons %}
                         <input class="btn btn-primary" type="submit" name="save" value="{{ _('Save') }}">
-                        <input class="btn btn-primary" type="submit" name="another" value="{{ _('Save and add another') }}">
+                        
+                        {% if  request.view.is_allowed('new') %}
+                            <input class="btn btn-primary" type="submit" name="another" value="{{ _('Save and add another') }}">
+                        {% endif %}
+
                         {% if obj and request.view.is_allowed('delete') %}
                             <a class="b-delete-button btn btn-danger"
                              href="javascript:void(0)" 
