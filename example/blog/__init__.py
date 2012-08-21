@@ -16,8 +16,10 @@ my_session_factory = UnencryptedCookieSessionFactoryConfig('itsaseekreet')
 def session_factory():
     return DBSession
 
-def allow_all(request):
-    return True
+class AdminAuthzPolicy(object):
+
+    def permits(self, request, context, permission):
+        return True
 
 
 class TagAdminView(AdminView):
@@ -61,7 +63,7 @@ def main(global_config, **settings):
     # config.add_admin_view('user_admin', '/admin/users/', UserAdminView)
     config.add_admin_site('/admin/')
     config.set_sqla_session_factory(session_factory)
-    config.set_admin_authz_policy(allow_all)
+    config.set_admin_authz_policy(AdminAuthzPolicy())
     config.add_admin_view('tags', TagAdminView)
     config.add_admin_view('categories', CategoryAdminView)
     config.add_admin_view('posts', PostAdminView)
