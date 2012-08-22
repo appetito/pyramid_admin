@@ -330,7 +330,7 @@ class AdminView(AdminViewBase):
 
     @column("")
     def repr(self, obj):
-        return unicode(obj)
+        return util.html_escape(unicode(obj))
 
 
     

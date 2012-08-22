@@ -24,7 +24,7 @@
 {% endblock %}
 
 {% block content %}
-    <h1 class="page-header">{{ request.view.title }} - {% if obj %}{{ _("editing") }}{% else %}{{ _("adding an item") }}{% endif %}</h1>
+    <h1 class="page-header">{{ request.view.title }} - {% if obj %}{{ _("editing") }} {{ request.view.repr(obj) }}{% else %}{{ _("adding an item") }}{% endif %}</h1>
     {% block functions %}
     {% endblock %}
 
