@@ -79,9 +79,8 @@ class AdminViewMeta(type):
         return ncl
 
 
-class AdminView(object):
+class AdminViewBase(object):
     """Basic admin class-based view"""
-
     __metaclass__ = AdminViewMeta
 
     title = None
@@ -113,26 +112,7 @@ class AdminView(object):
         self.parts = request.matchdict
         self.localizer = get_localizer(request)
         self.list_order = {'field': self.request.GET.get('order'), 'desc': self.request.GET.get('desc')}
-        for i, f in enumerate(self.filters):
-            if isinstance(f, basestring):
-                name, label = self.get_name_label(f)
-                if not hasattr(self.model, name):
-                    continue
-                typ = get_type(self.model, f)
-                filter_class = self.request.registry.queryAdapter(typ, IQueryFilter)
-                if not filter_class:
-                    continue
-                filter_inst = filter_class(name, label + ':')
-                self.filters.pop(i)
-                self.filters.insert(i, filter_inst)
-            elif isinstance(f, QueryFilter):    
-                filter_inst = f
-            else:
-                raise TypeError("Invalid Filter type ''. \
-                    Must by a name of model field or Subclass of pyramid_admin.filters.QueryFilter" % type(f))
-            fid = 'f%s' % i
-            filter_inst.activate(self.request, fid)
-
+        
     def __call__(self):
         action_name = self.parts.get("action", "list")
         if action_name in self.not_allowed:
@@ -155,8 +135,40 @@ class AdminView(object):
         renderer = action.__action_params__['renderer']
         return renderer, result
 
+    def process_response(self, data):
+        pass
+
+    def before_insert(self, obj):
+        """pre object creation hook"""
+        pass
+
+    def before_update(self, obj):
+        """pre object update hook"""
+        pass
+
+    def before_delete(self, obj):
+        """pre object deletion hook"""
+        pass
+
+    def url(self, action=None, obj=None, **q):
+        """
+        build url for view action or object action (if id param is not None)
+        """
+        return self.site.url(name=self.__view_name__, action=action, obj=obj, **q)
+
+    def page_url(self, page_num):
+            url = self.request.path_qs
+            return util.update_params(url, pg=page_num)
+
     def is_allowed(self, action):
         return action not in self.not_allowed
+
+    def message(self, msg, type='success'):
+        self.request.session.flash(self.localizer.translate(msg), type)
+
+
+class AdminView(AdminViewBase):
+    """Basic admin class-based view for sqla models"""
 
     def get_obj(self):
         pk_column = get_pk_column(self.model)
@@ -190,16 +202,6 @@ class AdminView(object):
             return self.form_class(formdata, obj)
         form_class = self._build_form()
         return form_class(formdata, obj)
-
-    def url(self, action=None, obj=None, **q):
-        """
-        build url for view action or object action (if id param is not None)
-        """
-        return self.site.url(name=self.__view_name__, action=action, obj=obj, **q)
-
-    def page_url(self, page_num):
-            url = self.request.path_qs
-            return util.update_params(url, pg=page_num)
 
     @action(renderer='pyramid_admin:templates/list.jinja2', index=True)
     def list(self):
@@ -278,21 +280,6 @@ class AdminView(object):
         except AssertionError: # if pyramid_tm is used
             pass
 
-    def process_response(self, data):
-        pass
-
-    def before_insert(self, obj):
-        """pre object creation hook"""
-        pass
-
-    def before_update(self, obj):
-        """pre object update hook"""
-        pass
-
-    def before_delete(self, obj):
-        """pre object deletion hook"""
-        pass
-
     def _build_form(self):
         """build form for model class"""
         exclude = self.form_exclude or []
@@ -302,9 +289,6 @@ class AdminView(object):
                           exclude=exclude, 
                           field_args=self.form_field_args, 
                           fields_override=self.form_fields)
-
-    def message(self, msg, type='success'):
-        self.request.session.flash(self.localizer.translate(msg), type)
 
     def get_name_label(self, field_name):
         """
