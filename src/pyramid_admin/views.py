@@ -89,7 +89,6 @@ class AdminView(object):
         if "request_method" in action.__action_params__ and \
                 self.request.method != action.__action_params__["request_method"]:
             raise HTTPNotFound
-
         result = action(self)
         registry = self.request.registry
         response = registry.queryAdapterOrSelf(result, IResponse)
