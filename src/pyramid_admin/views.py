@@ -1,6 +1,6 @@
 # views.py
 
-from functools import partial
+from functools import partial, wraps
 import urllib
 import datetime
 
@@ -9,16 +9,20 @@ from sqlalchemy import orm, or_, types
 from pyramid.httpexceptions import HTTPFound, HTTPNotFound
 from pyramid.renderers import render_to_response
 from pyramid.response import Response, IResponse
-from pyramid.config.views import ViewDeriver
+from pyramid.decorator import reify
+from pyramid.i18n import TranslationStringFactory, get_localizer
 from jinja2 import Markup
 from webhelpers import util, paginate
 from webhelpers.html import HTML
 
 
 from pyramid_admin.forms import model_form
-from pyramid_admin.interfaces import IColumnRenderer, ISqlaSessionFactory
+from pyramid_admin.filters import LikeFilter, QuickBoolFilter, QueryFilter
+from pyramid_admin.interfaces import IColumnRenderer, ISqlaSessionFactory, IQueryFilter
 from pyramid_admin.utils import get_pk_column, get_pk_value
 
+
+_ = TranslationStringFactory('pyramid_admin')
 
 def action(name=None, **kw):
     """action decorator"""
@@ -30,27 +34,61 @@ def action(name=None, **kw):
     return _wrapper
 
 
+def bulk_action(title, name=None, **kw):
+    """bulk action decorator"""
+    def _wrapper(fn):
+        kw['name'] = name or fn.__name__
+        kw['fn_name'] = fn.__name__
+        kw['bulk'] = True
+        fn.title = title
+        fn.__action_params__ = kw
+        return fn
+    return _wrapper
+
+
+def column(label):
+    """table column decorator"""
+    def _wrap(fn):
+        @wraps(fn)
+        def _wrapper(self, obj):
+            res = fn(self, obj)
+            return Markup(res)
+        _wrapper.__label__ = label
+        return _wrapper
+    return _wrap
+
+
 class AdminViewMeta(type):
 
     def __new__(cls, name, bases, dct):
         ncl = type.__new__(cls, name, bases, dct)
         ncl.__actions__ = {}
+        ncl.bulk_actions = []
         for name in dir(ncl):
             val = getattr(ncl, name, None)
             if callable(val) and hasattr(val, '__action_params__'):
                 name = val.__action_params__["name"]
+                if name in ncl.not_allowed:
+                    continue
                 val.__action_params__.update(ncl.override.get(name, {}))
                 ncl.__actions__[name] = val
+                if val.__action_params__.get("bulk"):
+                    ncl.bulk_actions.append((name, val.title))
+        if ncl.title is None and ncl.model:
+            ncl.title = ncl.model.__name__.title()
         return ncl
 
 
-class AdminView(object):
+class AdminViewBase(object):
     """Basic admin class-based view"""
-
     __metaclass__ = AdminViewMeta
 
-    field_list = ['id', unicode]
-    list_links = ['id']
+    title = None
+    model = None
+    form_class = None
+
+    field_list = ['pk', 'repr']
+    list_links = ['pk']
     filters = []
     items_per_page = 20
     override = {}
@@ -61,7 +99,8 @@ class AdminView(object):
     form_fields = None
     
     not_allowed = []
-    form_class = None
+    permission = None
+
     menu_group = ''
 
     def __init__(self, site, context, request):
@@ -71,14 +110,11 @@ class AdminView(object):
         self.request.view = self
         self.session = site.session
         self.parts = request.matchdict
+        self.localizer = get_localizer(request)
         self.list_order = {'field': self.request.GET.get('order'), 'desc': self.request.GET.get('desc')}
-        for i, f in enumerate(self.filters):
-            f.id = 'f%s' % i
-            f.activate(self.request)
-
+        
     def __call__(self):
         action_name = self.parts.get("action", "list")
-
         if action_name in self.not_allowed:
             raise HTTPNotFound
         action = self.__actions__.get(action_name, None)
@@ -98,12 +134,40 @@ class AdminView(object):
         renderer = action.__action_params__['renderer']
         return renderer, result
 
-    @property
-    def title(self):
-        return self.model.__name__ + " view" 
+    def process_response(self, data):
+        pass
+
+    def before_insert(self, obj):
+        """pre object creation hook"""
+        pass
+
+    def before_update(self, obj):
+        """pre object update hook"""
+        pass
+
+    def before_delete(self, obj):
+        """pre object deletion hook"""
+        pass
+
+    def url(self, action=None, obj=None, **q):
+        """
+        build url for view action or object action (if id param is not None)
+        """
+        return self.site.url(name=self.__view_name__, action=action, obj=obj, **q)
+
+    def page_url(self, page_num):
+            url = self.request.path_qs
+            return util.update_params(url, pg=page_num)
 
     def is_allowed(self, action):
         return action not in self.not_allowed
+
+    def message(self, msg, type='success'):
+        self.request.session.flash(self.localizer.translate(msg), type)
+
+
+class AdminView(AdminViewBase):
+    """Basic admin class-based view for sqla models"""
 
     def get_obj(self):
         pk_column = get_pk_column(self.model)
@@ -111,6 +175,11 @@ class AdminView(object):
         if not obj:
             raise HTTPNotFound
         return obj
+
+    def get_bulk_selected(self):
+        ids = self.request.POST.getall('select')
+        objects = self.session.query(self.model).filter(get_pk_column(self.model).in_(ids)).all()
+        return objects
 
     def get_list_query(self):
         q = self.session.query(self.model)
@@ -133,16 +202,6 @@ class AdminView(object):
         form_class = self._build_form()
         return form_class(formdata, obj)
 
-    def url(self, action=None, obj=None, **q):
-        """
-        build url for view action or object action (if id param is not None)
-        """
-        return self.site.url(name=self.__view_name__, action=action, obj=obj, **q)
-
-    def page_url(self, page_num):
-            url = self.request.path_qs
-            return util.update_params(url, pg=page_num)
-
     @action(renderer='pyramid_admin:templates/list.jinja2', index=True)
     def list(self):
         """generic list admin view"""
@@ -160,11 +219,14 @@ class AdminView(object):
             form = self.get_form(formdata=self.request.POST)
             if form.validate():
                 form.populate_obj(obj)
-                self.pre_update(obj)
+                self.before_update(obj)
                 self.session.add(obj)
                 self.session.flush()
                 self.commit()
-                return HTTPFound(self.url())
+                msg = _('Object <strong>"${obj}"</strong> successfully updated.', mapping={'obj':self.repr(obj)})
+                self.message(msg)
+                next = 'new' if 'another' in self.request.POST else None
+                return HTTPFound(self.url(action=next))
         else:
             form = self.get_form(obj)
         return {'obj':obj, 'obj_form': form}
@@ -177,26 +239,27 @@ class AdminView(object):
             if form.validate():
                 obj = self.model()
                 form.populate_obj(obj)
-                self.pre_create(obj)
+                self.before_insert(obj)
                 self.session.add(obj)
                 self.session.flush()
                 self.commit()
-                return HTTPFound(self.url())
+                msg = _('New object <strong>"${obj}"</strong> successfully created.', mapping={'obj':self.repr(obj)})
+                self.message(msg)
+                next = 'new' if 'another' in self.request.POST else None
+                return HTTPFound(self.url(action=next))
         return {'obj':None, 'obj_form': form}
 
     @action(request_method="POST")
     def delete(self):
         obj = self.get_obj()
         self._delete_obj(obj)
-        self.commit()
         return HTTPFound(self.url())
 
-    @action(request_method="POST", renderer="pyramid_admin:templates/confirm_delete.jinja2")
+    @bulk_action(_("Delete selected"), request_method="POST", renderer="pyramid_admin:templates/confirm_delete.jinja2")
     def bulk_delete(self):
         if not self.is_allowed('delete'):
             raise HTTPNotFound
-        ids = self.request.POST.getall('select')
-        objects = self.session.query(self.model).filter(get_pk_column(self.model).in_(ids)).all()
+        objects = self.get_bulk_selected()
         if 'confirmed' not in self.request.POST:
             return {'bulk': True, "objects": objects}
         for obj in objects:
@@ -204,8 +267,10 @@ class AdminView(object):
         return HTTPFound(self.url())
 
     def _delete_obj(self, obj):
-        self.pre_delete(obj)
+        self.before_delete(obj)
         self.session.delete(obj)
+        msg = _('Object <strong>"${obj}"</strong> successfully deleted.', mapping={'obj':self.repr(obj)})
+        self.message(msg)
         self.commit()
 
     def commit(self):
@@ -213,21 +278,6 @@ class AdminView(object):
             self.session.commit()
         except AssertionError: # if pyramid_tm is used
             pass
-
-    def process_response(self, data):
-        pass
-
-    def pre_create(self, obj):
-        """pre object creation hook"""
-        pass
-
-    def pre_update(self, obj):
-        """pre object update hook"""
-        pass
-
-    def pre_delete(self, obj):
-        """pre object deletion hook"""
-        pass
 
     def _build_form(self):
         """build form for model class"""
@@ -239,55 +289,97 @@ class AdminView(object):
                           field_args=self.form_field_args, 
                           fields_override=self.form_fields)
 
+    def get_name_label(self, field_name):
+        """
+        """
+        form = self._blank_form
+        if ':' in field_name:
+            field_name, label = field_name.split(':', 1)
+        elif field_name in form:
+            label = form[field_name].label.text
+        else:
+            label = field_name.title().replace('_', ' ')
+        return field_name, label
+            
+    @reify
+    def _blank_form(self):
+        """
+        blank form instance
+        """
+        return self.get_form()        
+
+    @reify
+    def columns(self):
+        colls = []
+        for f in self.field_list:
+            if isinstance(f, basestring):
+                name, label = self.get_name_label(f)
+                if hasattr(self.model, name):
+                    colls.append(Column(self, name, label))
+                elif hasattr(self, name):
+                    colls.append(MethodColumn(self, name))
+        return colls
+
+    @column("#")
     def pk(self, obj):
+        """
+        value of object primary key
+        """
         return get_pk_value(obj)
 
-    def fields(self, obj):
-        return TableRow(obj, self, self.field_list, self.list_links)
-            
-    def table_title(self, field_name):
-        if not isinstance(field_name, basestring) or field_name not in self.model.__table__.columns:
-            if field_name == unicode:
-                return self.title
-            return field_name
-        url = self.request.path_qs
+    @column("")
+    def repr(self, obj):
+        return util.html_escape(unicode(obj))
+
+
+    
+class Column(object):
+
+    def __init__(self, view, name, label=None):
+        self.view = view
+        self.label = label or name
+        self.name = name
+
+    def title(self):
+        field_name = self.name
+        url = self.view.request.path_qs
         url = util.update_params(url, order=field_name, desc=None)
         order_ico = ''
-        if field_name == self.list_order['field'] and not self.list_order['desc']:
+        if field_name == self.view.list_order['field'] and not self.view.list_order['desc']:
             order_ico = '<i class="icon-chevron-down"/>'
             url = util.update_params(url, order=field_name, desc=1)
-        elif field_name == self.list_order['field'] and self.list_order['desc']:
+        elif field_name == self.view.list_order['field'] and self.view.list_order['desc']:
             order_ico = '<i class="icon-chevron-up"/>'
             url = util.update_params(url, order=None, desc=None)
-        return Markup('<a href="%s">%s</a> %s' % (url, field_name, order_ico))
+        return Markup('<a href="%s">%s</a> %s' % (url, self.label, order_ico))
+
+    def get_val(self, obj):
+        renderer = self.view.request.registry.queryAdapter(get_type(obj, self.name), IColumnRenderer)
+        return renderer(getattr(obj, self.name))
+
+    def _link(self, obj, value):
+        return '<a href="%s">%s</a>' % (self.view.url(action="edit", obj=obj), value)
+
+    def __call__(self, obj):
+        val = self.get_val(obj)
+        if self.name in self.view.list_links:
+            val = self._link(obj, val)
+        return Markup(val)
 
 
-class TableRow(object):
+class MethodColumn(Column):
 
-    def __init__(self, obj, view, field_list, list_links):
-        self.obj = obj
+    def __init__(self, view, name):
         self.view = view
-        self.field_list = field_list
-        self.list_links = list_links
+        self.name = name
+        self.fn = getattr(self.view, name)
+        self.label = self.fn.__label__
 
-    def __iter__(self):
-        for f in self.field_list:
-            if isinstance(f, basestring) and hasattr(self.obj, f):
-                renderer = self.view.request.registry.queryAdapter(get_type(self.obj, f), IColumnRenderer)
-                val = renderer(getattr(self.obj, f))
-                label = f
-            elif isinstance(f, basestring) and hasattr(self.view, 'column_' + f):
-                val = getattr(self.view, 'column_' + f)(self.obj)
-                label = f
-            elif callable(f):
-                val = f(self.obj)
-                label = getattr(f, '__label__', f.__name__)
-            if f in self.list_links:
-                val = self._wrap_link_field(self.obj, val)
-            yield (f, val)
+    def title(self):
+        return self.label
 
-    def _wrap_link_field(self, obj, value):
-        return Markup('<a href="%s">%s</a>' % (self.view.url(action="edit", obj=obj), value))
+    def get_val(self, obj):
+        return self.fn(obj)
 
 
 def get_type(obj, fieldname):
@@ -311,6 +403,11 @@ class BoolRenderer(object):
     def __call__(self, val, editable=False):
         return Markup('<i class="%s"></i>' % ('icon-ok' if val else 'icon-remove'))
 
+def like_filter_factory(typ):
+    return LikeFilter
+
+def bool_filter_factory(typ):
+    return QuickBoolFilter
 
 def register_adapters(reg):
     from sqlalchemy.types import Integer
@@ -322,6 +419,8 @@ def register_adapters(reg):
     reg.registerAdapter(StringRenderer, (Integer,), IColumnRenderer)
     reg.registerAdapter(StringRenderer, (String,), IColumnRenderer)
     reg.registerAdapter(BoolRenderer, (Boolean,), IColumnRenderer)
+    reg.registerAdapter(like_filter_factory, (String,), IQueryFilter)
+    reg.registerAdapter(bool_filter_factory, (Boolean,), IQueryFilter)
 
 
 def to_dict(obj):

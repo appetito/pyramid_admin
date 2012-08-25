@@ -15,6 +15,8 @@ from pyramid_admin.utils import get_pk_value
 
 class AdminSite(object):
 
+    permission = 'pyramid_admin:site'
+
     def __init__(self, context, request):
         self.context = context
         self.request = request
@@ -23,7 +25,7 @@ class AdminSite(object):
         self.session = self.request.registry.queryUtility(ISqlaSessionFactory)()
 
     def __call__(self):
-        if not self.authorize():
+        if not self.permitted(self, self.permission):
             raise HTTPForbidden
         model_name = self.parts.get('model_name')
         action = self.parts.get('action', 'list')
@@ -31,6 +33,8 @@ class AdminSite(object):
             admin_view = self.request.registry.queryUtility(IAdminView, model_name)
             if admin_view is None:
                 raise HTTPNotFound
+            if admin_view.permission and not self.permitted(admin_view, admin_view.permission):
+                raise HTTPForbidden
 
             admin_view = admin_view(self, self.context, self.request)
             result = admin_view()
@@ -42,21 +46,23 @@ class AdminSite(object):
         else:
             return self.index()
 
-    def authorize(self):
+    def permitted(self, context, permission):
         """
         authorize admin site usage
         """
         authz_policy = self.request.registry.queryUtility(IAdminAuthzPolicy)
         if authz_policy:
-            return authz_policy(self.request)
-        return False        
+            return authz_policy.permits(self.request, context, permission)
+        return False
 
     def index(self):
         return render_to_response("pyramid_admin:templates/index.jinja2", {}, request=self.request)
 
-    def get_views(self):
-        return self.request.registry.getUtilitiesFor(IAdminView)
-
+    def get_views(self, all=False):
+        views = self.request.registry.getUtilitiesFor(IAdminView)
+        if not all:
+            views = filter(lambda v: self.permitted(v[1], v[1].permission), views)
+        return views
 
     def url(self, name=None, action=None, obj=None, **q):
         """

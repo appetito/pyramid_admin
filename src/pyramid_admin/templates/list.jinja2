@@ -26,59 +26,67 @@
 
 {% block content %}
 
-    
+    <h2>{{ request.view.title }}</h2>
+
     <form action="" method="post">
 
     {% block functions %}
-    <div class="row-fluid">
+    <div class="row">
 
-        <div class="btn-group span4">
-            {% if request.view.is_allowed('new') %}
-                <a class="btn btn-primary" href="{{ request.view.url(action="new") }}">Добавить</a> 
-            {% endif %}
-       
-            <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
-            Action
+        <div class="btn-group pull-right">
+        {% if request.view.bulk_actions and page.items %}
+          <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+            <i class="icon-cog"></i>
+            {{ _("Action") }}
             <span class="caret"></span>
           </a>
           <ul class="dropdown-menu">
             <!-- dropdown menu links -->
-            {% for act, title in request.view.bulk_actions %}
+            {% for act, title in request.view.bulk_actions if request.view.is_allowed(act) %}
                 <li>
-                    <a class="bulk-action" href="{{ request.view.url(action=act) }}">{{ title}}</a>
+                    <a class="bulk-action" href="{{ request.view.url(action=act) }}">{{ _(title) }}</a>
                 </li>
             {% endfor %}
-            {% if request.view.is_allowed('delete') %}
-                <li><a class="bulk-action" href="{{ request.view.url(action='bulk_delete') }}">Delete selected</a></li>
-            {% endif %}
+          
           </ul>
+         {% endif %}
+
+            {% if request.view.is_allowed('new') %}
+                <a class="btn btn-primary" href="{{ request.view.url(action="new") }}">
+                    <i class="icon-plus icon-white"></i> {{ _("Add") }}
+                </a> 
+            {% endif %}
         </div>
         
     </div>
     {% endblock %}
 
     {% block list %}
-        <p>items {{ page.first_item or 0 }} - {{ page.last_item or 0 }} of {{ page.item_count or 0 }}</p>
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th class="span1"><input type="checkbox" id="select_all"/></th>
-                        {% for f in request.view.field_list %}
-                            <th>{{ request.view.table_title(f) }}</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for obj in page.items %}
+        {% if page.items %}
+            <p>items {{ page.first_item or 0 }} - {{ page.last_item or 0 }} of {{ page.item_count or 0 }}</p>
+                <table class="list table table-bordered">
+                    <thead>
                         <tr>
-                            <th><input type="checkbox" name="select" value="{{ request.view.pk(obj) }}"/></th>
-                            {% for f in request.view.fields(obj) %}
-                                <td>{{ f[1] }}</td>
+                            <th style="width: 16px"><input type="checkbox" id="select_all"/></th>
+                            {% for coll in request.view.columns %}
+                                <th>{{ coll.title() }}</th>
                             {% endfor %}
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {% for obj in page.items %}
+                            <tr>
+                                <th><input type="checkbox" name="select" value="{{ request.view.pk(obj) }}"/></th>
+                                {% for coll in request.view.columns %}
+                                    <td>{{ coll(obj) }}</td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+        {% else %}
+            {{ _("No items yet.") }} <a href="{{ request.view.url(action="new") }}">{{ _("Add one?") }}</a> 
+        {% endif %}
     {% endblock %}
 
     </form>
@@ -114,16 +122,16 @@
 <!-- [ FILTERS ] -->
 {% block sidebar_extra %}
     {% if request.view.filters %}
-    <div>
+    <div class="well sidebar-nav">
         <form action="">
-            <ul class="nav nav-list">
-              <li class="nav-header">Filters</li>
+            <ul class="nav nav-list list-filters">
+              <li class="nav-header">{{ _("Filters") }}</li>
                 {% for f in request.view.filters %}
                     <li><h4>{{ f.title }}</h4></li>
                     <li>{{ f.display() }}</li>
                 {% endfor %}
-            <input type="submit" class="btn" value="Apply"/>
-            <a href="{{ request.view.url() }}" class="btn">Reset</a>
+            <input type="submit" class="btn" value="{{ _('Apply') }}"/>
+            <a href="{{ request.view.url() }}" class="btn">{{ _("Reset") }}</a>
         </form>
     </div>
     {% endif %}
