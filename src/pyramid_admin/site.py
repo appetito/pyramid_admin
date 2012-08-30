@@ -10,8 +10,6 @@ from pyramid_admin.interfaces import IAdminView
 from pyramid_admin.interfaces import ISqlaSessionFactory
 from pyramid_admin.interfaces import IAdminAuthzPolicy
 
-from pyramid_admin.utils import get_pk_value
-
 
 class AdminSite(object):
 
@@ -22,7 +20,6 @@ class AdminSite(object):
         self.request = request
         self.request.site = self
         self.parts = request.matchdict
-        self.session = self.request.registry.queryUtility(ISqlaSessionFactory)()
 
     def __call__(self):
         if not self.permitted(self, self.permission):
@@ -64,12 +61,11 @@ class AdminSite(object):
             views = filter(lambda v: self.permitted(v[1], v[1].permission), views)
         return views
 
-    def url(self, name=None, action=None, obj=None, **q):
+    def url(self, name=None, action=None, obj_id=None, **q):
         """
         build url for view action or object action (if obj param is not None)
         """
-        if name and action and obj:
-            obj_id = get_pk_value(obj)
+        if name and action and obj_id:
             fn = partial(self.request.route_path, "admin_model_obj_action", model_name=name, action=action, obj_id=obj_id)
         elif name and action:
             fn = partial(self.request.route_path, "admin_model_action", model_name=name, action=action)

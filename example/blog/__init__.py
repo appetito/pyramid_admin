@@ -60,6 +60,9 @@ def main(global_config, **settings):
     config.add_view('blog.views.my_view',
                     renderer="mytemplate.jinja2")
 
+    config.add_view('blog.views.new', name='new',
+                    renderer="json")
+
     # config.add_admin_view('user_admin', '/admin/users/', UserAdminView)
     config.add_admin_site('/admin/')
     config.set_sqla_session_factory(session_factory)

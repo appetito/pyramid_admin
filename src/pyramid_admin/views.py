@@ -108,7 +108,6 @@ class AdminViewBase(object):
         self.context = context
         self.request = request
         self.request.view = self
-        self.session = site.session
         self.parts = request.matchdict
         self.localizer = get_localizer(request)
         self.list_order = {'field': self.request.GET.get('order'), 'desc': self.request.GET.get('desc')}
@@ -153,7 +152,8 @@ class AdminViewBase(object):
         """
         build url for view action or object action (if id param is not None)
         """
-        return self.site.url(name=self.__view_name__, action=action, obj=obj, **q)
+        return self.site.url(name=self.__view_name__, action=action, 
+            obj_id=self.get_pk_value(obj) if obj else None, **q)
 
     def page_url(self, page_num):
             url = self.request.path_qs
@@ -165,9 +165,52 @@ class AdminViewBase(object):
     def message(self, msg, type='success'):
         self.request.session.flash(self.localizer.translate(msg), type)
 
+    def get_pk_value(self, obj):
+        raise NotImplementedError
+
+    def get_form(self, obj=None, formdata=None, **kw):
+        if self.form_class:
+            return self.form_class(formdata, obj, **kw)
+        form_class = self._build_form()
+        return form_class(formdata, obj, **kw)
+
+    def get_name_label(self, field_name):
+        """
+        """
+        form = self._blank_form
+        if ':' in field_name:
+            field_name, label = field_name.split(':', 1)
+        elif field_name in form:
+            label = form[field_name].label.text
+        else:
+            label = field_name.title().replace('_', ' ')
+        return field_name, label
+            
+    @reify
+    def _blank_form(self):
+        """
+        blank form instance
+        """
+        return self.get_form() 
+
+    @column("#")
+    def pk(self, obj):
+        """
+        value of object primary key
+        """
+        return self.get_pk_value(obj)
+
+    @column("")
+    def repr(self, obj):
+        return util.html_escape(unicode(obj))
+
 
 class AdminView(AdminViewBase):
     """Basic admin class-based view for sqla models"""
+
+    def __init__(self, site, context, request):
+        super(AdminView, self).__init__(site, context, request)
+        self.session = self.request.registry.queryUtility(ISqlaSessionFactory)()
 
     def get_obj(self):
         pk_column = get_pk_column(self.model)
@@ -195,12 +238,6 @@ class AdminView(AdminViewBase):
         for f in self.filters:
             query = f.apply(self.request, query, self.model)
         return query
-
-    def get_form(self, obj=None, formdata=None):
-        if self.form_class:
-            return self.form_class(formdata, obj)
-        form_class = self._build_form()
-        return form_class(formdata, obj)
 
     @action(renderer='pyramid_admin:templates/list.jinja2', index=True)
     def list(self):
@@ -320,17 +357,8 @@ class AdminView(AdminViewBase):
                     colls.append(MethodColumn(self, name))
         return colls
 
-    @column("#")
-    def pk(self, obj):
-        """
-        value of object primary key
-        """
+    def get_pk_value(self, obj):
         return get_pk_value(obj)
-
-    @column("")
-    def repr(self, obj):
-        return util.html_escape(unicode(obj))
-
 
     
 class Column(object):

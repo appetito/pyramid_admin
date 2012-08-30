@@ -85,16 +85,51 @@ class SuggestField(Field):
         return ('','')
 
 
-def model_form(model, base_class=Form, only=None, exclude=None, field_args=None, converter=None, fields_override=None):
+# def model_form(model, base_class=Form, only=None, exclude=None, field_args=None, converter=None, fields_override=None):
+#     """
+#     Create a wtforms Form for a given SQLAlchemy model class::
+
+#         from wtforms.ext.sqlalchemy.orm import model_form
+#         from myapp.models import User
+#         UserForm = model_form(User)
+
+#     :param model:
+#         A SQLAlchemy mapped model class.
+#     :param base_class:
+#         Base form class to extend from. Must be a ``wtforms.Form`` subclass.
+#     :param only:
+#         An optional iterable with the property names that should be included in
+#         the form. Only these properties will have fields.
+#     :param exclude:
+#         An optional iterable with the property names that should be excluded
+#         from the form. All other properties will have fields.
+#     :param field_args:
+#         An optional dictionary of field names mapping to keyword arguments used
+#         to construct each field object.
+#     :param converter:
+#         A converter to generate the fields based on the model properties. If
+#         not set, ``ModelConverter`` is used.
+#     """
+#     field_dict = model_fields(model, only, exclude, field_args, converter)
+#     if fields_override:
+#         field_dict.update(fields_override)
+#     return type(model.__name__ + 'Form', (base_class, ), field_dict)
+
+
+def model_form(model, db_session=None, base_class=Form, only=None,
+    exclude=None, field_args=None, converter=None, exclude_pk=True,
+    exclude_fk=True, type_name=None, fields_override=None):
     """
     Create a wtforms Form for a given SQLAlchemy model class::
 
-        from wtforms.ext.sqlalchemy.orm import model_form
+        from wtalchemy.orm import model_form
         from myapp.models import User
         UserForm = model_form(User)
 
     :param model:
         A SQLAlchemy mapped model class.
+    :param db_session:
+        An optional SQLAlchemy Session.
     :param base_class:
         Base form class to extend from. Must be a ``wtforms.Form`` subclass.
     :param only:
@@ -109,8 +144,34 @@ def model_form(model, base_class=Form, only=None, exclude=None, field_args=None,
     :param converter:
         A converter to generate the fields based on the model properties. If
         not set, ``ModelConverter`` is used.
+    :param exclude_pk:
+        An optional boolean to force primary key exclusion.
+    :param exclude_fk:
+        An optional boolean to force foreign keys exclusion.
+    :param type_name:
+        An optional string to set returned type name.
     """
-    field_dict = model_fields(model, only, exclude, field_args, converter)
+    class ModelForm(base_class):
+        """Sets object as form attribute."""
+        def __init__(self, *args, **kwargs):
+            if 'obj' in kwargs:
+                self._obj = kwargs['obj']
+            super(ModelForm, self).__init__(*args, **kwargs)
+
+    if not exclude:
+        exclude = []
+    model_mapper = model.__mapper__
+    for prop in model_mapper.iterate_properties:
+        if not hasattr(prop, 'direction') and prop.columns[0].primary_key:
+            if exclude_pk:
+                exclude.append(prop.key)
+        if hasattr(prop, 'direction') and  exclude_fk and \
+                prop.direction.name != 'MANYTOMANY':
+            for pair in prop.local_remote_pairs:
+                exclude.append(pair[0].key)
+    type_name = type_name or str(model.__name__ + 'Form')
+    field_dict = model_fields(model, db_session, only, exclude, field_args,
+        converter)
     if fields_override:
         field_dict.update(fields_override)
-    return type(model.__name__ + 'Form', (base_class, ), field_dict)
+    return type(type_name, (ModelForm, ), field_dict)
