@@ -51,8 +51,8 @@
           </ul>
          {% endif %}
 
-            {% if request.view.is_allowed('new') %}
-                <a class="btn btn-primary" href="{{ request.view.url(action="new") }}">
+            {% if request.view.is_allowed('create') %}
+                <a class="btn btn-primary" href="{{ request.view.url(action="create") }}">
                     <i class="icon-plus icon-white"></i> {{ _("Add") }}
                 </a> 
             {% endif %}
@@ -85,7 +85,7 @@
                     </tbody>
                 </table>
         {% else %}
-            {{ _("No items yet.") }} <a href="{{ request.view.url(action="new") }}">{{ _("Add one?") }}</a> 
+            {{ _("No items yet.") }} <a href="{{ request.view.url(action="create") }}">{{ _("Add one?") }}</a> 
         {% endif %}
     {% endblock %}
 

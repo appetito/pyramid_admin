@@ -8,7 +8,7 @@ from wtforms import *
 
 from blog.models import DBSession, metadata, Post, Tag, Category
 
-from pyramid_admin.views import AdminView
+from pyramid_admin.sqla import AdminView
 from pyramid_admin.filters import LikeFilter, BoolFilter
 
 my_session_factory = UnencryptedCookieSessionFactoryConfig('itsaseekreet')

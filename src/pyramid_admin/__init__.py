@@ -5,7 +5,7 @@ from pyramid.i18n import get_localizer, TranslationStringFactory
 from pyramid.threadlocal import get_current_request
 
 from pyramid_admin.site import AdminSite, IAdminView, ISqlaSessionFactory, IAdminAuthzPolicy
-from pyramid_admin.views import register_adapters, suggest_view
+from pyramid_admin.sqla import register_adapters, suggest_view
 
 
 
