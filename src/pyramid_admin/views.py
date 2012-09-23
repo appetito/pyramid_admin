@@ -15,7 +15,6 @@ from webhelpers import util, paginate
 from webhelpers.html import HTML
 
 
-from pyramid_admin.forms import model_form
 from pyramid_admin.filters import LikeFilter, QuickBoolFilter, QueryFilter
 from pyramid_admin.interfaces import IColumnRenderer, ISqlaSessionFactory, IQueryFilter
 from pyramid_admin.utils import get_pk_column, get_pk_value
