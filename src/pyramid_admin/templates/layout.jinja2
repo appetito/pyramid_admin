@@ -26,6 +26,11 @@
     <!--[if lt IE 9]>
       <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
+    {% if request.view %}
+      {% for src in request.view.extra_css %}
+        <link href="{{ src }}" rel="stylesheet">
+      {% endfor %}
+    {% endif %}
 
     <script src="{{ request.static_url('pyramid_admin:assets/jquery.min.js') }}"></script>
     <script src="{{ request.static_url('pyramid_admin:assets/js/jquery-ui.min.js') }}"></script>
@@ -100,6 +105,11 @@
     <!-- Placed at the end of the document so the pages load faster -->
     {% block bottom_js %}
     <script src="{{ request.static_url('pyramid_admin:assets/js/bootstrap.js') }}"></script>
+    {% if request.view %}
+      {% for src in request.view.extra_js %}
+        <script src="{{ src }}"></script>
+      {% endfor %}
+    {% endif %}
 
     {% block bottom_js_extra %}{% endblock %}
     <script type="text/javascript">

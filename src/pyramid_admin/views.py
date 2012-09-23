@@ -102,6 +102,9 @@ class AdminViewBase(object):
 
     menu_group = ''
 
+    extra_js = []
+    extra_css = []
+
     def __init__(self, site, context, request):
         self.site = site
         self.context = context
@@ -168,6 +171,7 @@ class AdminViewBase(object):
         """
         Get objects fo bulk actions.
         """
+        raise NotImplementedError
 
     def get_form(self, obj=None, formdata=None, **kw):
         if self.form_class:
