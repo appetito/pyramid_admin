@@ -208,7 +208,7 @@ class AdminViewBase(object):
                 self._save_obj(obj, False)
                 msg = _('Object <strong>"${obj}"</strong> successfully updated.', mapping={'obj':self.repr(obj)})
                 self.message(msg)
-                next = 'new' if 'another' in self.request.POST else None
+                next = 'create' if 'another' in self.request.POST else None
                 return HTTPFound(self.url(action=next))
         else:
             form = self.get_form(obj)
@@ -226,7 +226,7 @@ class AdminViewBase(object):
                 self._save_obj(obj, True)
                 msg = _('New object <strong>"${obj}"</strong> successfully created.', mapping={'obj':self.repr(obj)})
                 self.message(msg)
-                next = 'new' if 'another' in self.request.POST else None
+                next = 'create' if 'another' in self.request.POST else None
                 return HTTPFound(self.url(action=next))
         return {'obj':None, 'obj_form': form}
 
