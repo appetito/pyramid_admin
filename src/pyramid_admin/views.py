@@ -294,9 +294,7 @@ class AdminViewBase(object):
     def repr(self, obj):
         return util.html_escape(unicode(obj))
 
-    
 
-    
 class Column(object):
 
     def __init__(self, view, name, label=None):
@@ -318,8 +316,7 @@ class Column(object):
         return Markup('<a href="%s">%s</a> %s' % (url, self.label, order_ico))
 
     def get_val(self, obj):
-        renderer = self.view.request.registry.queryAdapter(get_type(obj, self.name), IColumnRenderer)
-        return renderer(getattr(obj, self.name))
+        raise NotImplementedError
 
     def _link(self, obj, value):
         return '<a href="%s">%s</a>' % (self.view.url(action="update", obj=obj), value)
@@ -346,10 +343,6 @@ class MethodColumn(Column):
         return self.fn(obj)
 
 
-def get_type(obj, fieldname):
-    return obj.__table__.columns[fieldname].type
-
-
 class StringRenderer(object):
 
     def __init__(self, type):
@@ -373,15 +366,3 @@ def like_filter_factory(typ):
 def bool_filter_factory(typ):
     return QuickBoolFilter
 
-def register_adapters(reg):
-    from sqlalchemy.types import Integer
-    from sqlalchemy.types import String
-    from sqlalchemy.types import Date
-    from sqlalchemy.types import DateTime
-    from sqlalchemy.types import Boolean
-
-    reg.registerAdapter(StringRenderer, (Integer,), IColumnRenderer)
-    reg.registerAdapter(StringRenderer, (String,), IColumnRenderer)
-    reg.registerAdapter(BoolRenderer, (Boolean,), IColumnRenderer)
-    reg.registerAdapter(like_filter_factory, (String,), IQueryFilter)
-    reg.registerAdapter(bool_filter_factory, (Boolean,), IQueryFilter)

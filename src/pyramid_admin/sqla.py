@@ -156,3 +156,47 @@ def suggest_view(context, request):
         ret = [to_dict(i) for i in query.filter(or_(*args)).limit(10).all()]
 
     return ret
+
+
+class SQLAColumn(Column):
+
+    def __init__(self, view, name, label=None):
+        self.view = view
+        self.label = label or name
+        self.name = name
+
+    def title(self):
+        field_name = self.name
+        url = self.view.request.path_qs
+        url = util.update_params(url, order=field_name, desc=None)
+        order_ico = ''
+        if field_name == self.view.list_order['field'] and not self.view.list_order['desc']:
+            order_ico = '<i class="icon-chevron-down"/>'
+            url = util.update_params(url, order=field_name, desc=1)
+        elif field_name == self.view.list_order['field'] and self.view.list_order['desc']:
+            order_ico = '<i class="icon-chevron-up"/>'
+            url = util.update_params(url, order=None, desc=None)
+        return Markup('<a href="%s">%s</a> %s' % (url, self.label, order_ico))
+
+    def get_val(self, obj):
+        renderer = self.view.request.registry.queryAdapter(get_type(obj, self.name), IColumnRenderer)
+        return renderer(getattr(obj, self.name))
+
+
+
+def get_type(obj, fieldname):
+    return obj.__table__.columns[fieldname].type
+
+
+def register_adapters(reg):
+    from sqlalchemy.types import Integer
+    from sqlalchemy.types import String
+    from sqlalchemy.types import Date
+    from sqlalchemy.types import DateTime
+    from sqlalchemy.types import Boolean
+
+    reg.registerAdapter(StringRenderer, (Integer,), IColumnRenderer)
+    reg.registerAdapter(StringRenderer, (String,), IColumnRenderer)
+    reg.registerAdapter(BoolRenderer, (Boolean,), IColumnRenderer)
+    reg.registerAdapter(like_filter_factory, (String,), IQueryFilter)
+    reg.registerAdapter(bool_filter_factory, (Boolean,), IQueryFilter)

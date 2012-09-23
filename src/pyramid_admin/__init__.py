@@ -5,7 +5,7 @@ from pyramid.i18n import get_localizer, TranslationStringFactory
 from pyramid.threadlocal import get_current_request
 
 from pyramid_admin.site import AdminSite, IAdminView, ISqlaSessionFactory, IAdminAuthzPolicy
-from pyramid_admin.views import register_adapters
+# from pyramid_admin.sqla import register_adapters
 
 
 
@@ -60,7 +60,7 @@ def includeme(config):
     env = config.get_jinja2_environment()
     env.filters.update({'errors': wtf_errors})
     env.install_gettext_callables(gettext, ngettext)
-    register_adapters(config.registry)
+    # register_adapters(config.registry)
 
 tsf = TranslationStringFactory('pyramid_admin')
 
