@@ -15,7 +15,7 @@ from pyramid_admin.forms import model_form
 from pyramid_admin.filters import LikeFilter, QuickBoolFilter, QueryFilter
 from pyramid_admin.interfaces import IColumnRenderer, ISqlaSessionFactory, IQueryFilter
 from pyramid_admin.utils import get_pk_column, get_pk_value
-from pyramid_admin.views import AdminViewBase
+from pyramid_admin.views import AdminViewBase, MethodColumn, Column
 
 class AdminView(AdminViewBase):
     """Basic admin class-based view for sqla models"""
@@ -111,95 +111,6 @@ class AdminView(AdminViewBase):
     def get_pk_value(self, obj):
         return get_pk_value(obj)
 
-    
-class Column(object):
-
-    def __init__(self, view, name, label=None):
-        self.view = view
-        self.label = label or name
-        self.name = name
-
-    def title(self):
-        field_name = self.name
-        url = self.view.request.path_qs
-        url = util.update_params(url, order=field_name, desc=None)
-        order_ico = ''
-        if field_name == self.view.list_order['field'] and not self.view.list_order['desc']:
-            order_ico = '<i class="icon-chevron-down"/>'
-            url = util.update_params(url, order=field_name, desc=1)
-        elif field_name == self.view.list_order['field'] and self.view.list_order['desc']:
-            order_ico = '<i class="icon-chevron-up"/>'
-            url = util.update_params(url, order=None, desc=None)
-        return Markup('<a href="%s">%s</a> %s' % (url, self.label, order_ico))
-
-    def get_val(self, obj):
-        renderer = self.view.request.registry.queryAdapter(get_type(obj, self.name), IColumnRenderer)
-        return renderer(getattr(obj, self.name))
-
-    def _link(self, obj, value):
-        return '<a href="%s">%s</a>' % (self.view.url(action="update", obj=obj), value)
-
-    def __call__(self, obj):
-        val = self.get_val(obj)
-        if self.name in self.view.list_links:
-            val = self._link(obj, val)
-        return Markup(val)
-
-
-class MethodColumn(Column):
-
-    def __init__(self, view, name):
-        self.view = view
-        self.name = name
-        self.fn = getattr(self.view, name)
-        self.label = self.fn.__label__
-
-    def title(self):
-        return self.label
-
-    def get_val(self, obj):
-        return self.fn(obj)
-
-
-def get_type(obj, fieldname):
-    return obj.__table__.columns[fieldname].type
-
-
-class StringRenderer(object):
-
-    def __init__(self, type):
-        self.type = type
-
-    def __call__(self, val, editable=False):
-        return val
-
-
-class BoolRenderer(object):
-
-    def __init__(self, type):
-        self.type = type
-
-    def __call__(self, val, editable=False):
-        return Markup('<i class="%s"></i>' % ('icon-ok' if val else 'icon-remove'))
-
-def like_filter_factory(typ):
-    return LikeFilter
-
-def bool_filter_factory(typ):
-    return QuickBoolFilter
-
-def register_adapters(reg):
-    from sqlalchemy.types import Integer
-    from sqlalchemy.types import String
-    from sqlalchemy.types import Date
-    from sqlalchemy.types import DateTime
-    from sqlalchemy.types import Boolean
-
-    reg.registerAdapter(StringRenderer, (Integer,), IColumnRenderer)
-    reg.registerAdapter(StringRenderer, (String,), IColumnRenderer)
-    reg.registerAdapter(BoolRenderer, (Boolean,), IColumnRenderer)
-    reg.registerAdapter(like_filter_factory, (String,), IQueryFilter)
-    reg.registerAdapter(bool_filter_factory, (Boolean,), IQueryFilter)
 
 
 def to_dict(obj):

@@ -5,7 +5,7 @@ from pyramid.i18n import get_localizer, TranslationStringFactory
 from pyramid.threadlocal import get_current_request
 
 from pyramid_admin.site import AdminSite, IAdminView, ISqlaSessionFactory, IAdminAuthzPolicy
-from pyramid_admin.sqla import register_adapters, suggest_view
+from pyramid_admin.views import register_adapters
 
 
 
@@ -27,7 +27,7 @@ def add_admin_site(config, prefix, view=AdminSite, title="Admin Site",
     config.add_view(view, route_name='admin_model')
     config.add_view(view, route_name='admin_model_action')
     config.add_view(view, route_name='admin_model_obj_action')
-    config.add_view(suggest_view, name='_model_suggest', renderer='json')
+    # config.add_view(suggest_view, name='_model_suggest', renderer='json')
 
 
 def add_admin_view(config, name, admin_view, permission=None):
