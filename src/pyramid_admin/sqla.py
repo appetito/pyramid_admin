@@ -72,6 +72,7 @@ class AdminView(AdminViewBase):
         exclude = self.form_exclude or []
         exclude.append(get_pk_column(self.model).name)
         return model_form(self.model,  
+                          db_session=self.session,
                           only=self.form_only, 
                           exclude=exclude, 
                           field_args=self.form_field_args, 
