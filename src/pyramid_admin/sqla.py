@@ -57,6 +57,11 @@ class AdminView(AdminViewBase):
             query = f.apply(self.request, query, self.model)
         return query
 
+    def _save_obj(self, obj, created):
+        if not orm.util.has_identity(obj):
+            self.session.add(obj)
+        self.commit()
+
     def _delete_obj(self, obj):
         self.session.delete(obj)
         self.commit()
