@@ -11,11 +11,13 @@ from jinja2 import Markup
 from webhelpers import util, paginate
 
 
-from pyramid_admin.forms import model_form
+# from pyramid_admin.forms import model_form
+from wtforms.ext.sqlalchemy.orm import model_form
 from pyramid_admin.filters import LikeFilter, QuickBoolFilter, QueryFilter
 from pyramid_admin.interfaces import IColumnRenderer, ISqlaSessionFactory, IQueryFilter
 from pyramid_admin.utils import get_pk_column, get_pk_value
 from pyramid_admin.views import AdminViewBase, MethodColumn, Column
+from pyramid_admin.filters import LikeFilter, QuickBoolFilter, QueryFilter
 
 class AdminView(AdminViewBase):
     """Basic admin class-based view for sqla models"""
@@ -80,8 +82,7 @@ class AdminView(AdminViewBase):
                           db_session=self.session,
                           only=self.form_only, 
                           exclude=exclude, 
-                          field_args=self.form_field_args, 
-                          fields_override=self.form_fields)
+                          field_args=self.form_field_args)
 
     def get_name_label(self, field_name):
         """
@@ -109,7 +110,7 @@ class AdminView(AdminViewBase):
             if isinstance(f, basestring):
                 name, label = self.get_name_label(f)
                 if hasattr(self.model, name):
-                    colls.append(Column(self, name, label))
+                    colls.append(SQLAColumn(self, name, label))
                 elif hasattr(self, name):
                     colls.append(MethodColumn(self, name))
         return colls
@@ -192,6 +193,32 @@ class SQLAColumn(Column):
 
 def get_type(obj, fieldname):
     return obj.__table__.columns[fieldname].type
+
+
+class StringRenderer(object):
+
+    def __init__(self, type):
+        self.type = type
+
+    def __call__(self, val, editable=False):
+        return val
+
+
+class BoolRenderer(object):
+
+    def __init__(self, type):
+        self.type = type
+
+    def __call__(self, val, editable=False):
+        return Markup('<i class="%s"></i>' % ('icon-ok' if val else 'icon-remove'))
+
+
+
+def like_filter_factory(typ):
+    return LikeFilter
+
+def bool_filter_factory(typ):
+    return QuickBoolFilter
 
 
 def register_adapters(reg):

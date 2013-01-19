@@ -15,7 +15,7 @@ from webhelpers import util, paginate
 from webhelpers.html import HTML
 
 
-from pyramid_admin.filters import LikeFilter, QuickBoolFilter, QueryFilter
+
 from pyramid_admin.interfaces import IColumnRenderer, ISqlaSessionFactory, IQueryFilter
 from pyramid_admin.utils import get_pk_column, get_pk_value
 
@@ -200,7 +200,7 @@ class AdminViewBase(object):
         """generic edit form admin view"""
         obj = self.get_obj()
         if self.request.method == 'POST':
-            form = self.get_form(formdata=self.request.POST)
+            form = self.get_form(formdata=self.request.POST, obj=obj)
             if form.validate():
                 form.populate_obj(obj)
                 self.before_update(obj)
@@ -342,26 +342,6 @@ class MethodColumn(Column):
         return self.fn(obj)
 
 
-class StringRenderer(object):
-
-    def __init__(self, type):
-        self.type = type
-
-    def __call__(self, val, editable=False):
-        return val
 
 
-class BoolRenderer(object):
-
-    def __init__(self, type):
-        self.type = type
-
-    def __call__(self, val, editable=False):
-        return Markup('<i class="%s"></i>' % ('icon-ok' if val else 'icon-remove'))
-
-def like_filter_factory(typ):
-    return LikeFilter
-
-def bool_filter_factory(typ):
-    return QuickBoolFilter
 
