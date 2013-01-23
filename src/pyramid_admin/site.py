@@ -84,6 +84,8 @@ class AdminSite(object):
             if v.menu_group not in groups:
                 groups[v.menu_group] = []
             groups[v.menu_group].append((n,v))
+        for name, items in groups.items():
+            groups[name] = sorted(items, key=lambda g: g[0])
         return sorted(groups.items(), key=lambda g: g[0])
 
 
