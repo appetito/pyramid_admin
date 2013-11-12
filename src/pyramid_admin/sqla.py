@@ -178,10 +178,10 @@ class SQLAColumn(Column):
         url = util.update_params(url, order=field_name, desc=None)
         order_ico = ''
         if field_name == self.view.list_order['field'] and not self.view.list_order['desc']:
-            order_ico = '<i class="icon-chevron-down"/>'
+            order_ico = '<i class="glyphicon glyphicon-chevron-down"/>'
             url = util.update_params(url, order=field_name, desc=1)
         elif field_name == self.view.list_order['field'] and self.view.list_order['desc']:
-            order_ico = '<i class="icon-chevron-up"/>'
+            order_ico = '<i class="glyphicon glyphicon-chevron-up"/>'
             url = util.update_params(url, order=None, desc=None)
         return Markup('<a href="%s">%s</a> %s' % (url, self.label, order_ico))
 
@@ -210,7 +210,7 @@ class BoolRenderer(object):
         self.type = type
 
     def __call__(self, val, editable=False):
-        return Markup('<i class="%s"></i>' % ('icon-ok' if val else 'icon-remove'))
+        return Markup('<i class="glyphicon %s"></i>' % ('glyphicon-ok' if val else 'glyphicon-remove'))
 
 
 
@@ -227,9 +227,14 @@ def register_adapters(reg):
     from sqlalchemy.types import Date
     from sqlalchemy.types import DateTime
     from sqlalchemy.types import Boolean
+    from sqlalchemy.types import Float
 
     reg.registerAdapter(StringRenderer, (Integer,), IColumnRenderer)
     reg.registerAdapter(StringRenderer, (String,), IColumnRenderer)
     reg.registerAdapter(BoolRenderer, (Boolean,), IColumnRenderer)
     reg.registerAdapter(like_filter_factory, (String,), IQueryFilter)
     reg.registerAdapter(bool_filter_factory, (Boolean,), IQueryFilter)
+    # ADD rodnsi 2013/11/08
+    reg.registerAdapter(StringRenderer, (DateTime,), IColumnRenderer)
+    reg.registerAdapter(StringRenderer, (Date,), IColumnRenderer)
+    reg.registerAdapter(StringRenderer, (Float,), IColumnRenderer)

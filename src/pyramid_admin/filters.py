@@ -38,7 +38,7 @@ class LikeFilter(QueryFilter):
         return query
 
     def display(self):
-        inp = HTML.tag('input', type="text", name=self.id, value=self.value, class_="filter_input")
+        inp = HTML.tag('input', type="text", name=self.id, value=self.value, class_="filter_input form_control")
         return Markup(inp)
 
 
@@ -66,7 +66,7 @@ class BoolFilter(QueryFilter):
         else:
             inp1 = HTML.tag('input', type="radio", name=self.id, value="f")
             inp2 = HTML.tag('input', type="radio", name=self.id, value="t")
-        return Markup('<label class="radio">%s%s</label><label class="radio">%s%s</label>' % (inp1, self.false, inp2, self.true))
+        return Markup('<div class="radio"><label>%s%s</label><label>%s%s</label></div>' % (inp1, self.false, inp2, self.true))
 
 
 class QuickBoolFilter(BoolFilter):

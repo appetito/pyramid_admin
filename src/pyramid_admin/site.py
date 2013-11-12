@@ -53,7 +53,7 @@ class AdminSite(object):
         return False
 
     def index(self):
-        return render_to_response("pyramid_admin:templates/index.jinja2", {}, request=self.request)
+        return render_to_response("pyramid_admin/index.jinja2", {}, request=self.request)
 
     def get_views(self, all=False):
         views = self.request.registry.getUtilitiesFor(IAdminView)

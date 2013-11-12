@@ -14,11 +14,12 @@
         padding-top: 60px;
         padding-bottom: 40px;
       }
-      .sidebar-nav {
-        padding: 9px 0;
-      }
+
+      @media (min-width: 768px) {
+        .sidebar-nav.navbar-collapse {
+          width: 25%/* .col-sm-3 -> width */
+        }
     </style>
-    <link href="{{ request.static_url('pyramid_admin:assets/css/bootstrap-responsive.css') }}" rel="stylesheet">
     <link href="{{ request.static_url('pyramid_admin:assets/css/jquery-ui.css') }}" rel="stylesheet">
     <link href="{{ request.static_url('pyramid_admin:assets/css/admin.css') }}" rel="stylesheet">
 
@@ -39,24 +40,31 @@
 
   <body>
     {% block navbar %}
-    <div class="navbar navbar-fixed-top">
-      <div class="navbar-inner">
-        <div class="container-fluid">
-          <a class="brand" href="{{ request.site.url() }}">{{ request.site.title }}</a>
-          {% block navbar_extra %}{% endblock %}
+    <header class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container col-lg-12">
+        <div class="navbar-header">
+          <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".bs-navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="{{ request.site.url() }}">{{ request.site.title }}</a>
         </div>
       </div>
-    </div>
+      <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
+          {% block navbar_extra %}{% endblock %}
+      </nav>
+    </header>
     {% endblock %}
 
     {% block container %}
-    <div class="container-fluid">
-      <div class="row">
-        <div class="span3">
+    <div class="container col-lg-12 ">
+      <div class="row col-sm-12">
           {% block sidebar %}
-          <div class="well sidebar-nav">
+          <div class="well sidebar-nav collapse sidebar-collapse navbar-collapse bs-navbar-collapse col-sm-3">
             {% block sidebar_nav %}
-            <ul class="nav nav-list">
+            <ul class="nav nav-pills nav-stacked">
               {% for group, views in request.site.menu_iter() %}
               {% if group %}
                 <li class="nav-header">{{ group }}</li>
@@ -71,34 +79,39 @@
             </ul>
             {% endblock %}
             {% block sidebar_nav_extra %}{% endblock %}
-            <div></div>
           </div><!--/.well -->
           {% block sidebar_extra %}{% endblock %}
           {% endblock %}
-        </div><!--/span-->
-        <div class="span9 b-content">
+        <!--</div>-->
+        <div class="col-sm-9 b-content">
           {% block messages %}
-            {% for msg in request.session.pop_flash('success') %}
-              <div class="alert alert-success fade in">
+            {% for queue in ['', 'info', 'success', 'warning', 'danger', 'error'] %}
+              {% for msg in request.session.pop_flash(queue) %}
+                <div class="alert
+                {% if queue == 'error' -%}
+                  alert-danger
+                {% else -%}
+                  alert-{{ queue|default('info', true) }}
+                {% endif -%} fade in">
                 <a class="close" data-dismiss="alert" href="#">&times;</a>
                 {{ msg|safe }}
-              </div>
+                </div>
+              {% endfor %}
             {% endfor %}
           {% endblock %}
           {% block content %}{% endblock %}
 
-        </div><!--/span-->
+        </div><!--/col-sm-9 -->
       </div><!--/row-->
-
       <hr>
 
       <footer>
         {% block footer %}
-          <p>&copy;</p>
+          <p>..&copy;</p>
           {% endblock %}
       </footer>
 
-    </div><!--/.fluid-container-->
+    </div><!--/.container -->
     {% endblock %}
     <!-- Le javascript
     ================================================== -->

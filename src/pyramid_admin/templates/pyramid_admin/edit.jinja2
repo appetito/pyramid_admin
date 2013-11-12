@@ -1,4 +1,4 @@
-{% extends "pyramid_admin:templates/base.jinja2" %}
+{% extends "pyramid_admin/base.jinja2" %}
 
 {% block head_extra %}
     {{ super() }}
@@ -29,13 +29,13 @@
     {% endblock %}
 
     {% block form %}
-        <form id="edit_form" class="form-horizontal" action="" method="post" enctype="multipart/form-data">
+        <form id="edit_form" class="form-horizontal" action="" method="post" enctype="multipart/form-data" role="form">
             <fieldset>
             {% block form_fields %}
                 {% for field in obj_form %}
-                    <div class="control-group {% if field.errors %}error{% endif %}">
-                        <label class="control-label">{{ field.label.text }} {% if field.flags.required %}*{% endif %}</label>
-                        <div class="controls">
+                    <div class="{% if field.type == 'BooleanField' %}checkbox{% else %}form-group{% endif %} {% if field.errors %}has-error{% endif %}">{# TODO RadioField #}
+                        <label class="control-label col-sm-3">{{ field.label.text }} {% if field.flags.required %}*{% endif %}</label>
+                        <div class="col-sm-9 controls">
                             {{ field }}{{ field|errors }}
                         </div>
                     </div>
@@ -43,8 +43,8 @@
             {% endblock %}
             {% block form_fields_extra %}
             {% endblock %}
-            <div class="control-group">
-                <div class="controls">
+            <div class="form-group">
+                <div class="controls col-sm-offset-3 col-sm-9">
                     {% block form_buttons %}
                         <input class="btn btn-primary" type="submit" name="save" value="{{ _('Save') }}">
                         
@@ -56,11 +56,11 @@
                             <a class="b-delete-button btn btn-danger"
                              href="javascript:void(0)" 
                              data-url="{{ request.view.url(action="delete", obj=obj) }}">
-                             <i class="icon-trash icon-white"></i>
+                             <i class="glyphicon glyphicon-trash glyphicon-white"></i>
                              {{ _("Delete") }}
                             </a>
                         {% endif %}
-                        <a class="btn" href="{{ request.view.url() }}">{{ _("Cancel") }}</a>
+                        <a class="btn btn-default" href="{{ request.view.url() }}">{{ _("Cancel") }}</a>
                     {% endblock %}
                 </div>
             </div>
@@ -68,4 +68,20 @@
         </form>
     {% endblock %}
 
+{% endblock %}
+{% block jq_ready %}
+
+
+
+{# TODO je n'ai pas trouve ou se fait l'initalisation des Fields #}
+console.log('oo');
+$('.form-group input[type=text]').each(function () {
+    $( this ).addClass('form-control');
+});
+$('.form-group select').each(function () {
+    $( this ).addClass('form-control');
+});
+$('.form-group textarea').each(function () {
+    $( this ).addClass('form-control');
+});
 {% endblock %}

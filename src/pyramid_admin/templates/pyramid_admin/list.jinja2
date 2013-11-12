@@ -1,4 +1,4 @@
-{% extends "pyramid_admin:templates/base.jinja2" %}
+{% extends "pyramid_admin/base.jinja2" %}
 
 {% block head_extra %}
     {{ super() }}
@@ -28,43 +28,43 @@
 
     <h2>{{ request.view.title }}</h2>
 
-    <form action="" method="post">
+    <form action="" method="post"">
 
     {% block functions %}
-    <div class="row">
 
-        <div class="btn-group pull-right">
-        {% if request.view.bulk_actions and page.items %}
-          <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
-            <i class="icon-cog"></i>
-            {{ _("Action") }}
-            <span class="caret"></span>
-          </a>
-          <ul class="dropdown-menu">
-            <!-- dropdown menu links -->
-            {% for act, title in request.view.bulk_actions if request.view.is_allowed(act) %}
-                <li>
-                    <a class="bulk-action" href="{{ request.view.url(action=act) }}">{{ _(title) }}</a>
-                </li>
-            {% endfor %}
-          
-          </ul>
-         {% endif %}
 
-            {% if request.view.is_allowed('create') %}
-                <a class="btn btn-primary" href="{{ request.view.url(action="create") }}">
-                    <i class="icon-plus icon-white"></i> {{ _("Add") }}
-                </a> 
-            {% endif %}
-        </div>
-        
+    <div class="btn-group pull-right">
+    {% if request.view.bulk_actions and page.items %}
+      <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
+        <i class="glyphicon glyphicon-cog"></i>
+        {{ _("Action") }}
+        <span class="caret"></span>
+      </a>
+      <ul class="dropdown-menu">
+        <!-- dropdown menu links -->
+        {% for act, title in request.view.bulk_actions if request.view.is_allowed(act) %}
+            <li>
+                <a class="bulk-action" href="{{ request.view.url(action=act) }}">{{ _(title) }}</a>
+            </li>
+        {% endfor %}
+      
+      </ul>
+     {% endif %}
+
+        {% if request.view.is_allowed('create') %}
+            <a class="btn btn-primary" href="{{ request.view.url(action="create") }}">
+                <i class="glyphicon glyphicon-plus glyphicon-white"></i> {{ _("Add") }}
+            </a> 
+        {% endif %}
     </div>
+        
+
     {% endblock %}
 
     {% block list %}
         {% if page.items %}
-            <p>items {{ page.first_item or 0 }} - {{ page.last_item or 0 }} of {{ page.item_count or 0 }}</p>
-                <table class="list table table-bordered">
+            <br><br><p>items {{ page.first_item or 0 }} - {{ page.last_item or 0 }} of {{ page.item_count or 0 }}</p>
+                <table class="list table table-bordered table-hover">
                     <thead>
                         <tr>
                             <th style="width: 16px"><input type="checkbox" id="select_all"/></th>
@@ -95,8 +95,8 @@
     {% block pager %}
 
          {% if page.page_count > 1 %}
-        <div class="pagination">
-          <ul>
+        <div>
+          <ul class="pagination">
             {% if page.page <= 1 %}
             <li class="disabled"><a>&lt;&lt;</a></li>
             {% else %}
@@ -124,7 +124,7 @@
     {% if request.view.filters %}
     <div class="well sidebar-nav">
         <form action="">
-            <ul class="nav nav-list list-filters">
+            <ul class="nav nav-pills list-filters">
               <li class="nav-header">{{ _("Filters") }}</li>
                 {% for f in request.view.filters %}
                     <li><h4>{{ f.title }}</h4></li>

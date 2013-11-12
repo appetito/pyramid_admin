@@ -2,12 +2,12 @@
 
 from wtforms import Form
 from wtforms import Field
-from wtforms import PasswordField
+#from wtforms import PasswordField
 from wtforms import TextField
-from wtforms import DateField
-from wtforms import IntegerField as StupidIntegerField
+#from wtforms import DateField
+#from wtforms import IntegerField as StupidIntegerField
 from wtforms import validators
-from wtforms import ValidationError
+#from wtforms import ValidationError
 from wtforms.ext.sqlalchemy.orm import model_fields
 from wtforms.widgets import TextInput
 from wtforms.widgets import HTMLString
@@ -48,7 +48,7 @@ class SuggestInput(TextInput):
              kwargs['value'], val = field._value()
         hidden = '<input %s/>' % self.html_params(name=field.name, **kwargs)
         text = '<input %s/>' % self.html_params(name=field.name + '__ac', id=kwargs['id'] + '__ac', 
-            type="text", value=val, class_=kwargs.get('class_'))
+            type="text", value=val, class_=kwargs.get('class_', '') + ' form-control')
         terms = "\n".join(["request['%s'] = request['term'];" % fld for fld in field.search_fields])
         script = self.SCRIPT % {
                                     'name': field.name, 
@@ -83,6 +83,7 @@ class SuggestField(Field):
             if obj:
                 return (self.data, getattr(obj, self.display_field))
         return ('','')
+
 
 
 # def model_form(model, base_class=Form, only=None, exclude=None, field_args=None, converter=None, fields_override=None):

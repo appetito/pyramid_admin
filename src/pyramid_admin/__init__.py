@@ -10,7 +10,7 @@ from pyramid_admin.site import AdminSite, IAdminView, ISqlaSessionFactory, IAdmi
 
 
 def wtf_errors(field):
-    html = u''.join([u'<span class="help-inline">%s</li>' % e for e in field.errors])
+    html = u''.join([u'<span class="help-inline">%s</span>' % e for e in field.errors])
     return Markup(html)
 
 
@@ -61,6 +61,7 @@ def includeme(config):
     env.filters.update({'errors': wtf_errors})
     env.install_gettext_callables(gettext, ngettext)
     # register_adapters(config.registry)
+    config.add_jinja2_search_path('pyramid_admin:templates')
 
 tsf = TranslationStringFactory('pyramid_admin')
 
