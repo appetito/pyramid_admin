@@ -1,5 +1,4 @@
-from wtforms import Form, validators, TextField, DateTimeField
-#from wtforms.ext.dateutil.fields import DateTimeField
+from wtforms import Form, validators, TextField
 
 
 class TagForm(Form):
