@@ -190,12 +190,12 @@ class AdminViewBase(object):
             label = field_name.title().replace('_', ' ')
         return field_name, label
 
-    @action(renderer='pyramid_admin:templates/list.jinja2', index=True)
+    @action(renderer='pyramid_admin/list.jinja2', index=True)
     def list(self):
         """generic list admin view"""
         return {'page':self.get_list_page()}
 
-    @action(renderer='pyramid_admin:templates/edit.jinja2')
+    @action(renderer='pyramid_admin/edit.jinja2')
     def update(self):
         """generic edit form admin view"""
         obj = self.get_obj()
@@ -213,7 +213,7 @@ class AdminViewBase(object):
             form = self.get_form(obj)
         return {'obj':obj, 'obj_form': form}
 
-    @action(renderer="pyramid_admin:templates/edit.jinja2")
+    @action(renderer="pyramid_admin/edit.jinja2")
     def create(self):
         form = self.get_form()
         if self.request.method=="POST":
@@ -238,7 +238,7 @@ class AdminViewBase(object):
         self.message(msg)
         return HTTPFound(self.url())
 
-    @bulk_action(_("Delete selected"), request_method="POST", renderer="pyramid_admin:templates/confirm_delete.jinja2")
+    @bulk_action(_("Delete selected"), request_method="POST", renderer="pyramid_admin/confirm_delete.jinja2")
     def bulk_delete(self):
         if not self.is_allowed('delete'):
             raise HTTPNotFound
@@ -249,6 +249,8 @@ class AdminViewBase(object):
         for obj in objects:
             self.before_delete(obj, bulk=True)
             self._delete_obj(obj)
+        msg = _('Object(s) successfully deleted.')
+        self.message(msg)
         return HTTPFound(self.url())
 
     def process_response(self, data):

@@ -1,43 +1,25 @@
 from pyramid.config import Configurator
 from pyramid.session import UnencryptedCookieSessionFactoryConfig
-from pyramid_jinja2 import renderer_factory
 from blog.models import get_root
-from blog.forms import TagForm
 
 from sqlalchemy import create_engine
-from wtforms import *
 
-from blog.models import DBSession, metadata, Post, Tag, Category
+from blog.models import DBSession, metadata
 
-from pyramid_admin.sqla import AdminView, register_adapters
-from pyramid_admin.filters import LikeFilter, BoolFilter
+from pyramid_admin.sqla import register_adapters
+
 
 my_session_factory = UnencryptedCookieSessionFactoryConfig('itsaseekreet')
 
 def session_factory():
     return DBSession
 
+
 class AdminAuthzPolicy(object):
 
     def permits(self, request, context, permission):
         return True
 
-
-
-class TagAdminView(AdminView):
-    model = Tag
-    title = 'Tags'
-    form_class = TagForm
-    field_list = ['id', 'label']
-
-class PostAdminView(AdminView):
-    model = Post
-    title = 'Posts'
-
-class CategoryAdminView(AdminView):
-    model = Category
-    title = 'Catagories'
- 
 
 def main(global_config, **settings):
     """ This function returns a WSGI application.
@@ -70,10 +52,8 @@ def main(global_config, **settings):
 
     # config.add_admin_view('user_admin', '/admin/users/', UserAdminView)
     config.add_admin_site('/admin/')
+    config.include('blog.admin')
     config.set_sqla_session_factory(session_factory)
     config.set_admin_authz_policy(AdminAuthzPolicy())
-    config.add_admin_view('tags', TagAdminView)
-    config.add_admin_view('categories', CategoryAdminView)
-    config.add_admin_view('posts', PostAdminView)
     register_adapters(config.registry)
     return config.make_wsgi_app()

@@ -1,24 +1,8 @@
-from sqlalchemy.orm import scoped_session
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.orm import relationship
-from sqlalchemy import Table
-from sqlalchemy import Column
-from sqlalchemy import ForeignKey
-from sqlalchemy.orm import scoped_session
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.orm import relation
-from sqlalchemy.orm import backref
-from sqlalchemy.orm import column_property
-from sqlalchemy.orm import synonym
-from sqlalchemy.orm import joinedload
-from sqlalchemy.types import Integer
-from sqlalchemy.types import Unicode
-from sqlalchemy.types import Boolean
-from sqlalchemy.types import UnicodeText
-from sqlalchemy.types import DateTime
-from sqlalchemy.sql import func
+from sqlalchemy.orm import scoped_session, sessionmaker, relationship
+from sqlalchemy import Table, Column, ForeignKey
+from sqlalchemy.orm import scoped_session, sessionmaker, backref
+from sqlalchemy.types import Integer, Unicode, UnicodeText, DateTime
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import MetaData
 
 
 DBSession = scoped_session(sessionmaker())
@@ -38,6 +22,9 @@ class Tag(Base):
     __tablename__ = 'tags'
     id = Column(Integer, primary_key=True)
     label = Column(Unicode(20), unique=True, nullable=False)
+    
+    def __unicode__(self):
+        return "%s" % self.label      
 
 
 class Category(Base):
@@ -48,10 +35,13 @@ class Category(Base):
     id = Column(Integer, primary_key=True)
     title = Column(Unicode(20), unique=True, nullable=False)
 
+    def __unicode__(self):
+        return "%s" % self.title
+
     
 class Post(Base):
     """
-    Bog post.
+    Blog post.
     """
     __tablename__ = 'posts'
     id = Column(Integer, primary_key=True)
@@ -62,6 +52,9 @@ class Post(Base):
 
     category = relationship('Category', backref='posts')
     tags = relationship('Tag', backref='posts', secondary=tag_post_table)
+
+    def __unicode__(self):
+        return "%s" % self.id
 
 
 class Root(object):
