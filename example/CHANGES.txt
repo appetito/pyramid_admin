@@ -2,3 +2,10 @@
 ---
 
 - Initial version
+
+
+0.1
+___
+
+- Creation of an admin.py
+- Use a new directive 'add_admin_include'

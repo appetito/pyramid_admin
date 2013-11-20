@@ -9,7 +9,7 @@ CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 requires=['pyramid>=1.0.2', 'pyramid_jinja2', 'sqlalchemy', 'pyramid_admin']
 
 setup(name='blog',
-      version='0.0',
+      version='0.1',
       description='blog',
       long_description=README + '\n\n' +  CHANGES,
       classifiers=[

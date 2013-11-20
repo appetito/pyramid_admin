@@ -33,7 +33,7 @@
             <fieldset>
             {% block form_fields %}
                 {% for field in obj_form %}
-                    <div class="{% if field.type == 'BooleanField' %}checkbox{% else %}form-group{% endif %} {% if field.errors %}has-error{% endif %}">{# TODO RadioField #}
+                    <div class="form-group {% if field.errors %}has-error{% endif %}">
                         <label class="control-label col-sm-3">{{ field.label.text }} {% if field.flags.required %}*{% endif %}</label>
                         <div class="col-sm-9 controls">
                             {{ field }}{{ field|errors }}
@@ -73,8 +73,6 @@
 
 
 
-{# TODO je n'ai pas trouve ou se fait l'initalisation des Fields #}
-console.log('oo');
 $('.form-group input[type=text]').each(function () {
     $( this ).addClass('form-control');
 });
