@@ -14,11 +14,6 @@
         padding-top: 60px;
         padding-bottom: 40px;
       }
-
-      @media (min-width: 768px) {
-        .sidebar-nav.navbar-collapse {
-          width: 25%/* .col-sm-3 -> width */
-        }
     </style>
     <link href="{{ request.static_url('pyramid_admin:assets/css/jquery-ui.css') }}" rel="stylesheet">
     <link href="{{ request.static_url('pyramid_admin:assets/css/admin.css') }}" rel="stylesheet">
@@ -67,7 +62,7 @@
             <ul class="nav nav-pills nav-stacked">
               {% for group, views in request.site.menu_iter() %}
               {% if group %}
-                <li class="nav-header">{{ group }}</li>
+                <li class="navbar-text">{{ group }}</li>
               {% endif %}
                 {% for name, view_class in views %}
                   <li {% if request.view.__class__ == view_class %} class="active"{% endif %}>

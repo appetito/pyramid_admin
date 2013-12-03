@@ -37,6 +37,78 @@ def add_admin_view(config, name, admin_view, permission=None):
     config.registry.registerUtility(admin_view, IAdminView, name)
 
 
+def add_admin_include(config, admins, admin_view=None, menu_group=None,
+        permission='pyramid_admin:site'):
+    """ Include module's admin """
+    def all_subclasses(cls):
+        """
+        Find all subclasses of a given class
+        """
+        return cls.__subclasses__() + [g for s in cls.__subclasses__()
+                for g in all_subclasses(s)]
+
+    def convert(name):
+        import re
+        s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+        return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+
+    if not admin_view:
+        admin_view = 'pyramid_admin.sqla:AdminView'
+    admin_view = config.maybe_dotted(admin_view)
+    if isinstance(admins, basestring):
+        admins = [admins]
+    for adm in admins:
+        mdl = None
+        models = []
+        try:
+            config.include('%s.admin' % adm) # Ex: blog.admin
+        except ImportError:
+            pass
+            #module = __import__(adm)
+        module = config.maybe_dotted(adm)
+        for val in ['model', 'models']:
+            if hasattr(module, val):
+                mdl = getattr(module, val)
+                break
+        if not mdl:
+            continue
+        try:
+            models = all_subclasses(vars(mdl)['Base'])
+        except KeyError: pass
+        try:
+            models.extend(all_subclasses(vars(mdl)['DeclarativeBase']))
+        except KeyError: pass
+        # unique list of models
+        models = list(set(models))
+        for model in models:
+            if not getattr(model, '__admindiscover__', True):
+                # If the value of '__adminidiscover__' is set to False, the
+                # administration's interface for model won't be generated
+                continue
+            if model in [reg.model for x, reg in \
+                    config.registry.getUtilitiesFor(IAdminView)]:
+                # Already regitered
+                continue
+            # Ex: tag
+            # Auto generation of classes
+            # The following code =>
+            # >>> class TagAdminView(AdminView):
+            # >>>     model = Tag
+            # >>>     menu_group = 'blog'
+            # becomes =>
+            params = {'model': model}
+            if menu_group:
+                params['menu_group'] = menu_group
+            view = type('%sAdminView' % model.__name__, (admin_view,),
+                    params)
+            # url: blog_tag
+            config.add_admin_view('%s_%s' % (
+                module.__name__.lower(), convert(model.__name__)),
+                view,
+                permission=permission
+            )
+
+
 def set_sqla_session_factory(config, factory):
     factory = config.maybe_dotted(factory)
     config.registry.registerUtility(factory, ISqlaSessionFactory)
@@ -52,6 +124,7 @@ def includeme(config):
     config.add_directive('set_sqla_session_factory', set_sqla_session_factory)
     config.add_directive('add_admin_view', add_admin_view)
     config.add_directive('add_admin_site', add_admin_site)
+    config.add_directive('add_admin_include', add_admin_include)
     config.add_static_view(name='_admin_assets', path="pyramid_admin:assets")
 
     config.add_jinja2_extension('jinja2.ext.i18n')

@@ -52,7 +52,7 @@ def main(global_config, **settings):
 
     # config.add_admin_view('user_admin', '/admin/users/', UserAdminView)
     config.add_admin_site('/admin/')
-    config.include('blog.admin')
+    config.add_admin_include('blog')
     config.set_sqla_session_factory(session_factory)
     config.set_admin_authz_policy(AdminAuthzPolicy())
     register_adapters(config.registry)

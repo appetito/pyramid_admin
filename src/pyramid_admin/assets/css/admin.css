@@ -43,6 +43,19 @@ background-color: #08C;
   border-radius: 0;
 }
 
+.nav-stacked .navbar-text {
+  margin-left: 15px;
+}
+
 .sidebar-nav {
   padding: 9px 0;
 }
+
+@media (min-width: 768px) {
+.sidebar-nav.navbar-collapse {
+  width: 25%;/* .col-sm-3 -> width */
+  max-height: 100%;
+}
+
+}
+

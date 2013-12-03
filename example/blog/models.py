@@ -57,6 +57,20 @@ class Post(Base):
         return "%s" % self.id
 
 
+class Author(Base):
+    """
+    Author
+    """
+    __admindiscover__ = False
+    __tablename__ = 'authors'
+    id = Column(Integer, primary_key=True)
+    login = Column(Unicode(20), unique=True, nullable=False)
+    pwd = Column(Unicode(20))
+
+    def __unicode__(self):
+        return "%s" % self.login
+
+
 class Root(object):
     pass
 

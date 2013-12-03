@@ -3,12 +3,12 @@ Admin views
 """
 import datetime
 
-from pyramid.httpexceptions import HTTPFound
+from pyramid.httpexceptions import HTTPFound, HTTPNotFound
 
 from pyramid_admin.sqla import AdminView
 from pyramid_admin.views import bulk_action
 
-from blog.models import Post, Tag, Category, DBSession
+from blog.models import Post, Tag, Category
 from blog.forms import TagForm
 
 
@@ -21,6 +21,7 @@ def includeme(config):
 class TagAdminView(AdminView):
     model = Tag
     title = 'Tags'
+    menu_group = 'blog'
     form_class = TagForm
 #    field_list = ['id', 'label']
 
@@ -28,6 +29,7 @@ class TagAdminView(AdminView):
 class PostAdminView(AdminView):
     model = Post
     title = 'Posts'
+    menu_group = 'blog'
     #not_allowed = ['set_date']
 
     # An example of an action
@@ -49,3 +51,4 @@ class PostAdminView(AdminView):
 class CategoryAdminView(AdminView):
     model = Category
     title = 'Categories'
+    menu_group = 'blog'

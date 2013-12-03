@@ -125,7 +125,7 @@
     <div class="well sidebar-nav">
         <form action="">
             <ul class="nav nav-pills list-filters">
-              <li class="nav-header">{{ _("Filters") }}</li>
+              <li class="navbar-text">{{ _("Filters") }}</li>
                 {% for f in request.view.filters %}
                     <li><h4>{{ f.title }}</h4></li>
                     <li>{{ f.display() }}</li>
